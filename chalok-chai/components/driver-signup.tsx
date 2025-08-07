@@ -4,12 +4,13 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Car, ArrowLeft, Upload } from "lucide-react"
+import { Car, ArrowLeft, Upload, AlertCircle, CheckCircle } from "lucide-react"
 
 interface DriverSignUpProps {
   onBack: () => void
@@ -22,17 +23,106 @@ export function DriverSignUp({ onBack }: DriverSignUpProps) {
     phone: "",
     dateOfBirth: "",
     nationalId: "",
-    drivingLicense: "",
+    drivingLicenseNumber: "",
     bio: "",
     location: "",
     password: "",
     confirmPassword: "",
   })
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null)
+  const [drivingLicensePhoto, setDrivingLicensePhoto] = useState<File | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [message, setMessage] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const router = useRouter()
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'profile' | 'license') => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (type === 'profile') {
+        setProfilePhoto(file)
+      } else {
+        setDrivingLicensePhoto(file)
+      }
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle driver sign up logic
-    console.log("Driver sign up:", formData)
+    setIsLoading(true)
+    setError("")
+
+    try {
+      const submitFormData = new FormData()
+      
+      // Append all form fields
+      Object.entries(formData).forEach(([key, value]) => {
+        submitFormData.append(key, value)
+      })
+
+      // Append files if selected
+      if (profilePhoto) {
+        submitFormData.append('profilePhoto', profilePhoto)
+      }
+      if (drivingLicensePhoto) {
+        submitFormData.append('drivingLicensePhoto', drivingLicensePhoto)
+      }
+
+      const response = await fetch("/api/auth/signup/driver", {
+        method: "POST",
+        body: submitFormData,
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setMessage(data.message)
+        setIsSuccess(true)
+        setTimeout(() => {
+          router.push('/signin')
+        }, 4000)
+      } else {
+        setError(data.error || "An error occurred during signup")
+      }
+    } catch {
+      setError("Network error. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-md space-y-6">
+          <div className="text-center">
+            <Link href="/" className="inline-flex items-center space-x-2">
+              <Car className="h-8 w-8 text-primary" />
+              <span className="text-2xl font-bold">ChalokChai</span>
+            </Link>
+          </div>
+
+          <Card>
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <CardTitle className="text-2xl">Application Submitted!</CardTitle>
+              <CardDescription>
+                Your driver application has been submitted for review
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <p className="text-sm text-green-800">{message}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -60,6 +150,13 @@ export function DriverSignUp({ onBack }: DriverSignUpProps) {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="bg-red-50 p-4 rounded-lg flex items-start space-x-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-red-800">{error}</p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input
@@ -69,6 +166,7 @@ export function DriverSignUp({ onBack }: DriverSignUpProps) {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -80,6 +178,7 @@ export function DriverSignUp({ onBack }: DriverSignUpProps) {
                   value={formData.dateOfBirth}
                   onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -92,6 +191,7 @@ export function DriverSignUp({ onBack }: DriverSignUpProps) {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -104,6 +204,7 @@ export function DriverSignUp({ onBack }: DriverSignUpProps) {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -116,18 +217,20 @@ export function DriverSignUp({ onBack }: DriverSignUpProps) {
                   value={formData.nationalId}
                   onChange={(e) => setFormData({ ...formData, nationalId: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="drivingLicense">Driving License</Label>
+                <Label htmlFor="drivingLicenseNumber">Driving License Number</Label>
                 <Input
-                  id="drivingLicense"
+                  id="drivingLicenseNumber"
                   type="text"
                   placeholder="Enter your driving license number"
-                  value={formData.drivingLicense}
-                  onChange={(e) => setFormData({ ...formData, drivingLicense: e.target.value })}
+                  value={formData.drivingLicenseNumber}
+                  onChange={(e) => setFormData({ ...formData, drivingLicenseNumber: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -140,6 +243,7 @@ export function DriverSignUp({ onBack }: DriverSignUpProps) {
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -151,14 +255,47 @@ export function DriverSignUp({ onBack }: DriverSignUpProps) {
                   value={formData.bio}
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                   rows={3}
+                  disabled={isLoading}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label>Profile Photo</Label>
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
-                  <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Click to upload your photo</p>
+                <Label>Profile Photo (Optional)</Label>
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, 'profile')}
+                    className="hidden"
+                    id="profilePhoto"
+                    disabled={isLoading}
+                  />
+                  <label htmlFor="profilePhoto" className="cursor-pointer block text-center">
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      {profilePhoto ? profilePhoto.name : "Click to upload your photo"}
+                    </p>
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Driving License Photo (Optional)</Label>
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, 'license')}
+                    className="hidden"
+                    id="licensePhoto"
+                    disabled={isLoading}
+                  />
+                  <label htmlFor="licensePhoto" className="cursor-pointer block text-center">
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      {drivingLicensePhoto ? drivingLicensePhoto.name : "Click to upload license photo"}
+                    </p>
+                  </label>
                 </div>
               </div>
 
@@ -171,6 +308,7 @@ export function DriverSignUp({ onBack }: DriverSignUpProps) {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -183,11 +321,12 @@ export function DriverSignUp({ onBack }: DriverSignUpProps) {
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
-              <Button type="submit" className="w-full">
-                Create Driver Account
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Creating Account..." : "Create Driver Account"}
               </Button>
             </form>
 

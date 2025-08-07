@@ -4,11 +4,12 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Car, ArrowLeft } from "lucide-react"
+import { Car, ArrowLeft, AlertCircle, CheckCircle } from "lucide-react"
 
 interface CarOwnerSignUpProps {
   onBack: () => void
@@ -22,11 +23,75 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
     password: "",
     confirmPassword: "",
   })
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [message, setMessage] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const router = useRouter()
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle car owner sign up logic
-    console.log("Car owner sign up:", formData)
+    setIsLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch("/api/auth/signup/owner", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setMessage(data.message)
+        setIsSuccess(true)
+        setTimeout(() => {
+          router.push('/signin')
+        }, 3000)
+      } else {
+        setError(data.error || "An error occurred during signup")
+      }
+    } catch {
+      setError("Network error. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-md space-y-6">
+          <div className="text-center">
+            <Link href="/" className="inline-flex items-center space-x-2">
+              <Car className="h-8 w-8 text-primary" />
+              <span className="text-2xl font-bold">ChalokChai</span>
+            </Link>
+          </div>
+
+          <Card>
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <CardTitle className="text-2xl">Account Created!</CardTitle>
+              <CardDescription>
+                Please check your email to verify your account
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <p className="text-sm text-green-800">{message}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -54,6 +119,13 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="bg-red-50 p-4 rounded-lg flex items-start space-x-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-red-800">{error}</p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input
@@ -63,6 +135,7 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -75,6 +148,7 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -87,6 +161,7 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -99,6 +174,7 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -111,11 +187,12 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
-              <Button type="submit" className="w-full">
-                Create Account
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
 

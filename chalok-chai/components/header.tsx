@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Car } from "lucide-react"
 import { MobileNav } from "@/components/mobile-nav"
+import { UserButton } from "@/components/user-button"
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -32,16 +33,9 @@ export function Header() {
             </Link>
           </nav>
 
-          {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Link href="/signin">
-              <Button variant="ghost" size="sm">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/signup">
-              <Button size="sm">Sign Up</Button>
-            </Link>
+          {/* Desktop Auth Buttons / User Button */}
+          <div className="hidden md:flex items-center">
+            <UserButton />
           </div>
 
           {/* Mobile Menu Button */}
