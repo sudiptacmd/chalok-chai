@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Menu, X, Car } from "lucide-react"
-import { MobileNav } from "@/components/mobile-nav"
-import { UserButton } from "@/components/user-button"
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Menu, X, Car } from "lucide-react";
+import { MobileNav } from "@/components/mobile-nav";
+import { UserButton } from "@/components/user-button";
 
 export function Header() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -22,13 +22,22 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/find-driver" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link
+              href="/find-driver"
+              className="text-sm font-medium hover:text-primary transition-colors"
+            >
               Find Driver
             </Link>
-            <Link href="/become-driver" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link
+              href="/become-driver"
+              className="text-sm font-medium hover:text-primary transition-colors"
+            >
               Become a Driver
             </Link>
-            <Link href="/about" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link
+              href="/about"
+              className="text-sm font-medium hover:text-primary transition-colors"
+            >
               About
             </Link>
           </nav>
@@ -45,13 +54,20 @@ export function Header() {
             className="md:hidden"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {isMobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </Button>
         </div>
       </div>
 
       {/* Mobile Navigation */}
-      <MobileNav isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+      <MobileNav
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+      />
     </header>
-  )
+  );
 }

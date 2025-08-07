@@ -1,25 +1,31 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Car, ArrowLeft, Mail, CheckCircle, AlertCircle } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Car, ArrowLeft, Mail, CheckCircle, AlertCircle } from "lucide-react";
 
 export function ForgotPasswordPage() {
-  const [email, setEmail] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState("")
-  const [error, setError] = useState("")
-  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
-    setMessage("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+    setMessage("");
 
     try {
       const response = await fetch("/api/auth/forgot-password", {
@@ -28,22 +34,22 @@ export function ForgotPasswordPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (response.ok) {
-        setMessage(data.message)
-        setIsSubmitted(true)
+        setMessage(data.message);
+        setIsSubmitted(true);
       } else {
-        setError(data.error || "An error occurred")
+        setError(data.error || "An error occurred");
       }
     } catch (error) {
-      setError("Network error. Please try again.")
+      setError("Network error. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (isSubmitted) {
     return (
@@ -76,8 +82,8 @@ export function ForgotPasswordPage() {
                 Didn't receive an email? Check your spam folder or{" "}
                 <button
                   onClick={() => {
-                    setIsSubmitted(false)
-                    setMessage("")
+                    setIsSubmitted(false);
+                    setMessage("");
                   }}
                   className="text-primary hover:underline"
                 >
@@ -97,7 +103,7 @@ export function ForgotPasswordPage() {
           </Card>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -165,5 +171,5 @@ export function ForgotPasswordPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

@@ -1,26 +1,30 @@
-import nodemailer from 'nodemailer'
+import nodemailer from "nodemailer";
 
 // Create transporter with SMTP configuration
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
+  port: parseInt(process.env.SMTP_PORT || "587"),
   secure: false, // true for 465, false for other ports
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-})
+});
 
 /**
  * Send email verification email
  */
-export async function sendEmailVerification(email: string, name: string, token: string) {
-  const verificationUrl = `${process.env.NEXTAUTH_URL}/api/auth/verify-email?token=${token}`
-  
+export async function sendEmailVerification(
+  email: string,
+  name: string,
+  token: string
+) {
+  const verificationUrl = `${process.env.NEXTAUTH_URL}/api/auth/verify-email?token=${token}`;
+
   const mailOptions = {
     from: process.env.EMAIL_FROM,
     to: email,
-    subject: 'Verify Your Email - ChalokChai',
+    subject: "Verify Your Email - ChalokChai",
     html: `
       <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
         <div style="text-align: center; margin-bottom: 30px;">
@@ -64,27 +68,34 @@ export async function sendEmailVerification(email: string, name: string, token: 
         </div>
       </div>
     `,
-  }
+  };
 
   try {
-    await transporter.sendMail(mailOptions)
-    return { success: true }
+    await transporter.sendMail(mailOptions);
+    return { success: true };
   } catch (error) {
-    console.error('Email verification sending failed:', error)
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' }
+    console.error("Email verification sending failed:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to send email",
+    };
   }
 }
 
 /**
  * Send password reset email
  */
-export async function sendPasswordResetEmail(email: string, name: string, token: string) {
-  const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`
-  
+export async function sendPasswordResetEmail(
+  email: string,
+  name: string,
+  token: string
+) {
+  const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
+
   const mailOptions = {
     from: process.env.EMAIL_FROM,
     to: email,
-    subject: 'Reset Your Password - ChalokChai',
+    subject: "Reset Your Password - ChalokChai",
     html: `
       <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
         <div style="text-align: center; margin-bottom: 30px;">
@@ -128,23 +139,32 @@ export async function sendPasswordResetEmail(email: string, name: string, token:
         </div>
       </div>
     `,
-  }
+  };
 
   try {
-    await transporter.sendMail(mailOptions)
-    return { success: true }
+    await transporter.sendMail(mailOptions);
+    return { success: true };
   } catch (error) {
-    console.error('Password reset email sending failed:', error)
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' }
+    console.error("Password reset email sending failed:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to send email",
+    };
   }
 }
 
 /**
  * Send driver approval notification email
  */
-export async function sendDriverApprovalEmail(email: string, name: string, approved: boolean) {
-  const subject = approved ? 'Application Approved - ChalokChai' : 'Application Update - ChalokChai'
-  
+export async function sendDriverApprovalEmail(
+  email: string,
+  name: string,
+  approved: boolean
+) {
+  const subject = approved
+    ? "Application Approved - ChalokChai"
+    : "Application Update - ChalokChai";
+
   const mailOptions = {
     from: process.env.EMAIL_FROM,
     to: email,
@@ -157,14 +177,16 @@ export async function sendDriverApprovalEmail(email: string, name: string, appro
         
         <div style="background: #f8fafc; padding: 30px; border-radius: 8px; border: 1px solid #e2e8f0;">
           <h2 style="color: #1e293b; margin-top: 0;">
-            ${approved ? 'Congratulations!' : 'Application Update'}
+            ${approved ? "Congratulations!" : "Application Update"}
           </h2>
           
           <p style="color: #475569; line-height: 1.6; margin-bottom: 20px;">
             Hello ${name},
           </p>
           
-          ${approved ? `
+          ${
+            approved
+              ? `
           <p style="color: #475569; line-height: 1.6; margin-bottom: 20px;">
             Great news! Your driver application has been approved. You can now start accepting ride requests and earning with ChalokChai.
           </p>
@@ -179,7 +201,8 @@ export async function sendDriverApprovalEmail(email: string, name: string, appro
           <p style="color: #475569; line-height: 1.6;">
             Welcome to the ChalokChai driver community!
           </p>
-          ` : `
+          `
+              : `
           <p style="color: #475569; line-height: 1.6; margin-bottom: 20px;">
             Thank you for your interest in becoming a ChalokChai driver. After reviewing your application, we need additional information or documentation before we can proceed.
           </p>
@@ -187,7 +210,8 @@ export async function sendDriverApprovalEmail(email: string, name: string, appro
           <p style="color: #475569; line-height: 1.6; margin-bottom: 20px;">
             Please contact our support team for more details on the next steps.
           </p>
-          `}
+          `
+          }
         </div>
         
         <div style="text-align: center; margin-top: 30px; color: #64748b; font-size: 14px;">
@@ -195,13 +219,16 @@ export async function sendDriverApprovalEmail(email: string, name: string, appro
         </div>
       </div>
     `,
-  }
+  };
 
   try {
-    await transporter.sendMail(mailOptions)
-    return { success: true }
+    await transporter.sendMail(mailOptions);
+    return { success: true };
   } catch (error) {
-    console.error('Driver approval email sending failed:', error)
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' }
+    console.error("Driver approval email sending failed:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to send email",
+    };
   }
 }

@@ -1,18 +1,24 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Car, ArrowLeft, AlertCircle, CheckCircle } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Car, ArrowLeft, AlertCircle, CheckCircle } from "lucide-react";
 
 interface CarOwnerSignUpProps {
-  onBack: () => void
+  onBack: () => void;
 }
 
 export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
@@ -22,18 +28,18 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
     phone: "",
     password: "",
     confirmPassword: "",
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [isSuccess, setIsSuccess] = useState(false)
-  const [message, setMessage] = useState("")
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const router = useRouter()
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
     try {
       const response = await fetch("/api/auth/signup/owner", {
@@ -42,25 +48,25 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (response.ok) {
-        setMessage(data.message)
-        setIsSuccess(true)
+        setMessage(data.message);
+        setIsSuccess(true);
         setTimeout(() => {
-          router.push('/signin')
-        }, 3000)
+          router.push("/signin");
+        }, 3000);
       } else {
-        setError(data.error || "An error occurred during signup")
+        setError(data.error || "An error occurred during signup");
       }
     } catch {
-      setError("Network error. Please try again.")
+      setError("Network error. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (isSuccess) {
     return (
@@ -91,7 +97,7 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
           </Card>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -112,8 +118,12 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div>
-                <CardTitle className="text-xl">Car Owner Registration</CardTitle>
-                <CardDescription>Create your account to find drivers</CardDescription>
+                <CardTitle className="text-xl">
+                  Car Owner Registration
+                </CardTitle>
+                <CardDescription>
+                  Create your account to find drivers
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -133,7 +143,9 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
                   type="text"
                   placeholder="Enter your full name"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   required
                   disabled={isLoading}
                 />
@@ -146,7 +158,9 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
                   type="email"
                   placeholder="Enter your email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   required
                   disabled={isLoading}
                 />
@@ -159,7 +173,9 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
                   type="tel"
                   placeholder="Enter your phone number"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                   required
                   disabled={isLoading}
                 />
@@ -172,7 +188,9 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
                   type="password"
                   placeholder="Create a password"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
                   required
                   disabled={isLoading}
                 />
@@ -185,7 +203,12 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
                   type="password"
                   placeholder="Confirm your password"
                   value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      confirmPassword: e.target.value,
+                    })
+                  }
                   required
                   disabled={isLoading}
                 />
@@ -208,5 +231,5 @@ export function CarOwnerSignUp({ onBack }: CarOwnerSignUpProps) {
         </Card>
       </div>
     </div>
-  )
+  );
 }

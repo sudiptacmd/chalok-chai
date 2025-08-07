@@ -1,64 +1,70 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { signIn } from "next-auth/react"
-import { useSearchParams } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Car, Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react"
+import { useState, useEffect } from "react";
+import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Car, Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
 
 export function SignInPage() {
-  const [showPassword, setShowPassword] = useState(false)
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [message, setMessage] = useState("")
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    const urlError = searchParams.get('error')
-    const urlMessage = searchParams.get('message')
-    
+    const urlError = searchParams.get("error");
+    const urlMessage = searchParams.get("message");
+
     if (urlError) {
-      setError(decodeURIComponent(urlError))
+      setError(decodeURIComponent(urlError));
     }
     if (urlMessage) {
-      setMessage(decodeURIComponent(urlMessage))
+      setMessage(decodeURIComponent(urlMessage));
     }
-  }, [searchParams])
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
-    setMessage("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+    setMessage("");
 
     try {
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         email: formData.email,
         password: formData.password,
         redirect: true, // Let NextAuth handle the redirect automatically
-      })
+      });
 
       // This code will not execute if redirect is true and signin is successful
       if (result?.error) {
-        setError(result.error)
+        setError(result.error);
       }
     } catch {
-      setError("An unexpected error occurred")
+      setError("An unexpected error occurred");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -74,7 +80,9 @@ export function SignInPage() {
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription>Sign in to your account to continue</CardDescription>
+            <CardDescription>
+              Sign in to your account to continue
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {message && (
@@ -99,7 +107,9 @@ export function SignInPage() {
                   type="email"
                   placeholder="Enter your email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   required
                   disabled={isLoading}
                 />
@@ -113,7 +123,9 @@ export function SignInPage() {
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
                     required
                     disabled={isLoading}
                   />
@@ -125,13 +137,20 @@ export function SignInPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={isLoading}
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </div>
 
               <div className="flex items-center justify-between">
-                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm text-primary hover:underline"
+                >
                   Forgot password?
                 </Link>
               </div>
@@ -153,5 +172,5 @@ export function SignInPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
