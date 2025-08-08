@@ -9,7 +9,9 @@ export default withAuth(
     // If authenticated user tries to access signin/signup, redirect to appropriate dashboard
     if (token && (pathname === "/signin" || pathname === "/signup")) {
       const userType = token.type as string;
-      if (userType === "admin" || userType === "owner") {
+      if (userType === "admin") {
+        return NextResponse.redirect(new URL("/admin", req.url));
+      } else if (userType === "owner") {
         return NextResponse.redirect(new URL("/find-driver", req.url));
       } else if (userType === "driver") {
         return NextResponse.redirect(new URL("/driver-dashboard", req.url));
@@ -31,7 +33,8 @@ export default withAuth(
         }
       }
 
-      // Driver-only routes
+      // Driver-only routes - Note: Driver approval is checked in auth-options.ts
+      // So if they reach here, they are already approved
       if (pathname.startsWith("/driver-dashboard")) {
         if (userType !== "driver") {
           if (userType === "admin") {
