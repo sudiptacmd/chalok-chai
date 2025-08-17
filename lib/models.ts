@@ -58,6 +58,10 @@ const UserSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  suspended: {
+    type: Boolean,
+    default: false,
+  },
   emailVerificationToken: {
     type: String,
     default: null,
