@@ -16,6 +16,12 @@ export async function POST(request: NextRequest) {
 
     await dbConnect();
 
+    // Update existing users to have suspended field if they don't
+    const updateResult = await User.updateMany(
+      { suspended: { $exists: false } },
+      { $set: { suspended: false } }
+    );
+
     // Check if admin already exists
     const existingAdmin = await User.findOne({ type: "admin" });
 
@@ -23,6 +29,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         message: "Admin user already exists",
         email: existingAdmin.email,
+        migrationInfo: `Updated ${updateResult.modifiedCount} users with suspended field`,
       });
     }
 
@@ -34,6 +41,7 @@ export async function POST(request: NextRequest) {
       password: "admin123456", // This will be hashed automatically
       type: "admin",
       emailVerified: true,
+      suspended: false,
     });
 
     await adminUser.save();
@@ -42,6 +50,7 @@ export async function POST(request: NextRequest) {
       message: "Admin user created successfully",
       email: adminUser.email,
       password: "admin123456", // Return password for initial login
+      migrationInfo: `Updated ${updateResult.modifiedCount} users with suspended field`,
     });
   } catch (error) {
     console.error("Admin seed error:", error);
