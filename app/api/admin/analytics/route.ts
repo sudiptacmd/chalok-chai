@@ -57,7 +57,9 @@ export async function GET() {
 
     const activeBookingsAgg = await Owner.aggregate([
       { $unwind: "$bookingHistory" },
-      { $match: { "bookingHistory.status": { $in: ["pending", "confirmed"] } } },
+      {
+        $match: { "bookingHistory.status": { $in: ["pending", "confirmed"] } },
+      },
       { $count: "active" },
     ]);
     const activeBookings = activeBookingsAgg[0]?.active || 0;
@@ -97,13 +99,25 @@ export async function GET() {
       const recent = (completedStats.recent as RecentBookingRaw[])
         .sort(
           (a, b) =>
-            new Date(b.createdAt || b.endDate || b.startDate || new Date(0)).getTime() -
-            new Date(a.createdAt || a.endDate || a.startDate || new Date(0)).getTime()
+            new Date(
+              b.createdAt || b.endDate || b.startDate || new Date(0)
+            ).getTime() -
+            new Date(
+              a.createdAt || a.endDate || a.startDate || new Date(0)
+            ).getTime()
         )
         .slice(0, 10);
-      const driverIds = recent.map((r) => r.driverId).filter(Boolean) as string[];
-      const drivers = await Driver.find({ _id: { $in: driverIds } }).populate("userId", "name");
-      interface PopulatedDriver { _id: string; userId?: { name?: string } }
+      const driverIds = recent
+        .map((r) => r.driverId)
+        .filter(Boolean) as string[];
+      const drivers = await Driver.find({ _id: { $in: driverIds } }).populate(
+        "userId",
+        "name"
+      );
+      interface PopulatedDriver {
+        _id: string;
+        userId?: { name?: string };
+      }
       const driverMap = new Map<string, string>(
         (drivers as unknown as PopulatedDriver[]).map((d) => [
           d._id.toString(),
@@ -112,7 +126,9 @@ export async function GET() {
       );
       recentBookings = recent.map((r, i) => ({
         id: i.toString(),
-        driverName: r.driverId ? driverMap.get(r.driverId.toString()) || "Unknown" : "Unknown",
+        driverName: r.driverId
+          ? driverMap.get(r.driverId.toString()) || "Unknown"
+          : "Unknown",
         amount: r.amount || 0,
         date: (r.endDate || r.startDate || r.createdAt || new Date()) as Date,
         status: r.status || "completed",
@@ -126,7 +142,7 @@ export async function GET() {
     ]);
     const averageRating = ratingAgg[0]?.avgRating || 0;
 
-  const data: AnalyticsPayload = {
+    const data: AnalyticsPayload = {
       totalUsers,
       totalDrivers,
       totalCarOwners: totalOwners,
@@ -142,6 +158,9 @@ export async function GET() {
     return NextResponse.json(data);
   } catch (error) {
     console.error("Analytics fetch error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

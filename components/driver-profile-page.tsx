@@ -1,72 +1,82 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Header } from "@/components/header"
-import { DriverProfileHeader } from "@/components/driver-profile-header"
-import { DriverProfileTabs } from "@/components/driver-profile-tabs"
-import { BookingModal } from "@/components/booking-modal"
-import { ReportModal } from "@/components/report-modal"
+import { useState, useEffect } from "react";
+import { Header } from "@/components/header";
+import { DriverProfileHeader } from "@/components/driver-profile-header";
+import { DriverProfileTabs } from "@/components/driver-profile-tabs";
+import { BookingModal } from "@/components/booking-modal";
+import { ReportModal } from "@/components/report-modal";
 
 interface DriverProfilePageProps {
-  driverId: string
+  driverId: string;
 }
 
 interface DriverData {
-  id: string
-  name: string
-  photo: string | null
-  rating: number
-  reviewCount: number
-  experience: string
-  location: string
-  pricePerDay: number | null
-  pricePerMonth: number | null
-  verified: boolean
-  preferences: string[]
-  bio: string
-  joinedDate: string
-  completedTrips: number
-  languages: string[]
-  vehicleTypes: string[]
-  availability: Record<string, string>
-  reviews: { id: string; userName: string; rating: number; comment: string; date: string }[]
+  id: string;
+  name: string;
+  photo: string | null;
+  rating: number;
+  reviewCount: number;
+  experience: string;
+  location: string;
+  pricePerDay: number | null;
+  pricePerMonth: number | null;
+  verified: boolean;
+  preferences: string[];
+  bio: string;
+  joinedDate: string;
+  completedTrips: number;
+  languages: string[];
+  vehicleTypes: string[];
+  availability: Record<string, string>;
+  reviews: {
+    id: string;
+    userName: string;
+    rating: number;
+    comment: string;
+    date: string;
+  }[];
 }
 
 export function DriverProfilePage({ driverId }: DriverProfilePageProps) {
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false)
-  const [driver, setDriver] = useState<DriverData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [driver, setDriver] = useState<DriverData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const controller = new AbortController()
+    const controller = new AbortController();
     const load = async () => {
       try {
-        setLoading(true)
-        const res = await fetch(`/api/drivers/${driverId}`, { signal: controller.signal })
-        if (!res.ok) throw new Error("Failed to load driver profile")
-        const json = await res.json()
-        setDriver(json)
+        setLoading(true);
+        const res = await fetch(`/api/drivers/${driverId}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error("Failed to load driver profile");
+        const json = await res.json();
+        setDriver(json);
       } catch (e) {
-        if (!(e instanceof DOMException && e.name === 'AbortError')) {
-          setError(e instanceof Error ? e.message : 'Unknown error')
+        if (!(e instanceof DOMException && e.name === "AbortError")) {
+          setError(e instanceof Error ? e.message : "Unknown error");
         }
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    load()
-    return () => controller.abort()
-  }, [driverId])
+    };
+    load();
+    return () => controller.abort();
+  }, [driverId]);
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        {loading && <p className="text-sm text-muted-foreground">Loading driver...</p>}
+        {loading && (
+          <p className="text-sm text-muted-foreground">Loading driver...</p>
+        )}
         {error && <p className="text-sm text-red-600">{error}</p>}
-        {driver && (
+        {driver &&
           (() => {
             const headerDriver = {
               id: driver.id,
@@ -84,7 +94,7 @@ export function DriverProfilePage({ driverId }: DriverProfilePageProps) {
               joinedDate: driver.joinedDate,
               completedTrips: driver.completedTrips,
               languages: driver.languages,
-            }
+            };
             return (
               <>
                 <DriverProfileHeader
@@ -94,9 +104,8 @@ export function DriverProfilePage({ driverId }: DriverProfilePageProps) {
                 />
                 <DriverProfileTabs driver={driver} />
               </>
-            )
-          })()
-        )}
+            );
+          })()}
       </main>
 
       {driver && (
@@ -110,7 +119,11 @@ export function DriverProfilePage({ driverId }: DriverProfilePageProps) {
           }}
         />
       )}
-      <ReportModal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} driverId={driverId} />
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        driverId={driverId}
+      />
     </div>
-  )
+  );
 }

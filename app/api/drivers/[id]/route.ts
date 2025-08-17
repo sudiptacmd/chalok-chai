@@ -16,18 +16,27 @@ export async function GET(
       return NextResponse.json({ error: "Driver not found" }, { status: 404 });
     }
 
-    interface PopulatedUser { name?: string; profilePhoto?: string; emailVerified?: boolean }
-    interface RatingDoc { _id?: { toString(): string }; score: number; description: string; createdAt: Date }
+    interface PopulatedUser {
+      name?: string;
+      profilePhoto?: string;
+      emailVerified?: boolean;
+    }
+    interface RatingDoc {
+      _id?: { toString(): string };
+      score: number;
+      description: string;
+      createdAt: Date;
+    }
     interface DriverDoc {
-      _id: { toString(): string }
-      userId?: PopulatedUser
-      averageRating?: number
-      ratings: RatingDoc[]
-      totalRides: number
-      location: string
-      approved: boolean
-      bio?: string
-      createdAt: Date
+      _id: { toString(): string };
+      userId?: PopulatedUser;
+      averageRating?: number;
+      ratings: RatingDoc[];
+      totalRides: number;
+      location: string;
+      approved: boolean;
+      bio?: string;
+      createdAt: Date;
     }
     const d = driver as unknown as DriverDoc;
     interface ExtendedDriverDoc extends DriverDoc {
@@ -40,21 +49,21 @@ export async function GET(
       availability?: Array<{ date: Date; status: string }>;
     }
     const ed = d as ExtendedDriverDoc;
-    const experienceLabel = ed.experienceYears && ed.experienceYears >= 5
-      ? "5+ years"
-      : ed.experienceYears && ed.experienceYears >= 3
-      ? "3-5 years"
-      : ed.experienceYears && ed.experienceYears >= 1
-      ? "1-2 years"
-      : "<1 year";
-    const availabilityMap = (ed.availability || []).reduce<Record<string, string>>(
-      (acc, slot) => {
-        const dateKey = new Date(slot.date).toISOString().split("T")[0];
-        acc[dateKey] = slot.status;
-        return acc;
-      },
-      {}
-    );
+    const experienceLabel =
+      ed.experienceYears && ed.experienceYears >= 5
+        ? "5+ years"
+        : ed.experienceYears && ed.experienceYears >= 3
+        ? "3-5 years"
+        : ed.experienceYears && ed.experienceYears >= 1
+        ? "1-2 years"
+        : "<1 year";
+    const availabilityMap = (ed.availability || []).reduce<
+      Record<string, string>
+    >((acc, slot) => {
+      const dateKey = new Date(slot.date).toISOString().split("T")[0];
+      acc[dateKey] = slot.status;
+      return acc;
+    }, {});
     const response = {
       id: ed._id.toString(),
       name: ed.userId?.name || "Unnamed",
@@ -88,6 +97,9 @@ export async function GET(
     return NextResponse.json(response);
   } catch (error) {
     console.error("Driver detail error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
