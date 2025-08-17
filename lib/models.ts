@@ -161,6 +161,55 @@ const DriverSchema = new Schema({
     type: Date,
     required: true,
   },
+  // Pricing & commercial fields
+  pricePerDay: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  pricePerMonth: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  // Years of professional driving experience
+  experienceYears: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  // Driver self-declared or platform tagged preferences (e.g., Non-smoker, English speaking)
+  preferences: {
+    type: [String],
+    default: [],
+  },
+  // Languages the driver can communicate in
+  languages: {
+    type: [String],
+    default: [],
+  },
+  // Vehicle types the driver is comfortable with
+  vehicleTypes: {
+    type: [String],
+    default: [],
+  },
+  // Availability calendar entries (denormalized for quick lookups)
+  availability: {
+    type: [
+      new Schema(
+        {
+          date: { type: Date, required: true },
+          status: {
+            type: String,
+            enum: ["available", "booked", "unavailable"],
+            default: "available",
+          },
+        },
+        { _id: false }
+      ),
+    ],
+    default: [],
+  },
   approved: {
     type: Boolean,
     default: false,
@@ -228,7 +277,7 @@ DriverSchema.methods.calculateAverageRating = function () {
   }
 
   const sum = this.ratings.reduce(
-    (acc: number, rating: any) => acc + rating.score,
+    (acc: number, rating: { score: number }) => acc + (rating?.score || 0),
     0
   );
   this.averageRating = Math.round((sum / this.ratings.length) * 10) / 10;
