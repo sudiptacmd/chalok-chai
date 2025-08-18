@@ -1,5 +1,6 @@
 import mongoose, { Schema, model, models } from "mongoose";
 import bcrypt from "bcryptjs";
+import { unique } from "next/dist/build/utils";
 
 // Rating Schema for embedded ratings
 const RatingSchema = new Schema({
@@ -96,6 +97,12 @@ const OwnerSchema = new Schema({
     required: true,
     unique: true,
   },
+  // Profile fields
+  name: { type: String, default: null },
+  email: { type: String, default: null },
+  phone: { type: String, default: null },
+  address: { type: String, default: null },
+  // Booking and ratings
   bookingHistory: [
     {
       driverId: {
@@ -135,57 +142,28 @@ const DriverSchema = new Schema({
     required: true,
     unique: true,
   },
-  nationalId: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-  },
-  drivingLicenseNumber: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-  },
-  drivingLicensePhoto: {
-    type: String,
-    default: null,
-  },
-  location: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  bio: {
-    type: String,
-    trim: true,
-    default: "",
-  },
-  dateOfBirth: {
-    type: Date,
-    required: true,
-  },
-  approved: {
-    type: Boolean,
-    default: false,
-  },
+  // Profile fields
+  name: { type: String, default: null },
+  email: { type: String, default: null, required: true },
+  phone: { type: String, default: null, required: true },
+  dateOfBirth: { type: Date, default: null, required: true },
+  nationalId: { type: String, default: null, required: true, unique: true },
+  drivingLicenseNumber: { type: String, default: null, required: true, unique: true },
+  drivingLicensePhoto: { type: String, default: null },
+  location: { type: String, default: null, required: true },
+  bio: { type: String, default: null },
+  languages: { type: [String], default: [] },
+  preferences: { type: [String], default: [] },
+  experience: { type: String, default: null },
+  pricePerDay: { type: Number, default: null },
+  pricePerMonth: { type: Number, default: null },
+  // Other fields
+  approved: { type: Boolean, default: false },
   ratings: [RatingSchema],
-  averageRating: {
-    type: Number,
-    default: 0,
-  },
-  totalRides: {
-    type: Number,
-    default: 0,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
+  averageRating: { type: Number, default: 0 },
+  totalRides: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
 
 // Pre-save middleware to hash password

@@ -72,6 +72,10 @@ export async function POST(request: NextRequest) {
     // Create owner profile
     const owner = new Owner({
       userId: savedUser._id,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone.trim(),
+      address: null, // Address not collected at signup
     });
 
     await owner.save();
