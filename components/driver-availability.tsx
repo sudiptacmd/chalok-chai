@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
@@ -10,15 +10,23 @@ import { cn } from "@/lib/utils"
 
 export function DriverAvailability() {
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [availability, setAvailability] = useState<Record<string, "available" | "unavailable" | "booked">>({
-    "2024-01-15": "available",
-    "2024-01-16": "available",
-    "2024-01-17": "booked",
-    "2024-01-18": "available",
-    "2024-01-19": "unavailable",
-    "2024-01-20": "available",
-    "2024-01-21": "booked",
-  })
+  const [availability, setAvailability] = useState<Record<string, "available" | "unavailable" | "booked">>({})
+
+  // Fetch availability from API on mount
+  useEffect(() => {
+    fetch("/api/driver/availability")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.availability) {
+          // Convert array to record
+          const availObj: Record<string, "available" | "unavailable" | "booked"> = {};
+          data.availability.forEach((item: { date: string; status: "unavailable" | "booked" }) => {
+            availObj[item.date] = item.status;
+          });
+          setAvailability(availObj);
+        }
+      });
+  }, []);
 
   const [isAutoAccept, setIsAutoAccept] = useState(false)
 
@@ -51,25 +59,50 @@ export function DriverAvailability() {
     return new Date(year, month, day).toISOString().split("T")[0]
   }
 
-  const getStatusColor = (status: string) => {
+  // Use border color only, not background
+  const getStatusBorder = (status: string) => {
     switch (status) {
-      case "available":
-        return "bg-green-500 text-white border-green-500 hover:bg-green-600"
       case "unavailable":
-        return "bg-red-500 text-white border-red-500 hover:bg-red-600"
+        return "border-2 border-red-500 text-red-700 bg-white hover:border-red-600";
       case "booked":
-        return "bg-blue-500 text-white border-blue-500 cursor-not-allowed"
+        return "border-2 border-blue-500 text-blue-700 bg-white cursor-not-allowed";
+      case "available":
       default:
-        return "bg-muted text-muted-foreground border-muted hover:bg-muted/80"
+        return "border-2 border-green-500 text-green-700 bg-white hover:border-green-600";
     }
   }
 
   const toggleAvailability = (dateStr: string) => {
-    const currentStatus = availability[dateStr] || "unavailable"
-    if (currentStatus === "booked") return // Can't change booked days
+    const currentStatus = availability[dateStr] || "available";
+    if (currentStatus === "booked") return; // Can't change booked days
 
-    const newStatus = currentStatus === "available" ? "unavailable" : "available"
-    setAvailability({ ...availability, [dateStr]: newStatus })
+    // Toggle unavailable/available for multiple days
+    const updatedAvailability = { ...availability };
+    if (currentStatus === "available") {
+      updatedAvailability[dateStr] = "unavailable";
+    } else if (currentStatus === "unavailable") {
+      delete updatedAvailability[dateStr];
+    }
+    
+    // Get only unavailable dates (not booked)
+    const unavailableDates = Object.keys(updatedAvailability).filter(date => updatedAvailability[date] === "unavailable");
+    
+    // Send all unavailable dates to API
+    fetch("/api/driver/availability", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dates: unavailableDates, status: "unavailable" }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.availability) {
+          const availObj: Record<string, "available" | "unavailable" | "booked"> = {};
+          data.availability.forEach((item: { date: string; status: "unavailable" | "booked" }) => {
+            availObj[item.date] = item.status;
+          });
+          setAvailability(availObj);
+        }
+      });
   }
 
   const previousMonth = () => {
@@ -150,24 +183,22 @@ export function DriverAvailability() {
           <div className="grid grid-cols-7 gap-2">
             {days.map((day, index) => {
               if (day === null) {
-                return <div key={index} className="p-2" />
+                return <div key={`empty-${index}`} className="p-2" />;
               }
-
-              const dateStr = formatDate(day)
-              const status = availability[dateStr] || "unavailable"
-
+              const dateStr = formatDate(day);
+              const status = availability[dateStr] || "available";
               return (
                 <Button
-                  key={day}
+                  key={dateStr}
                   variant="outline"
                   size="sm"
-                  className={cn("h-12 text-sm transition-colors", getStatusColor(status))}
+                  className={cn("h-12 text-sm transition-colors bg-white", getStatusBorder(status))}
                   onClick={() => toggleAvailability(dateStr)}
                   disabled={status === "booked"}
                 >
                   {day}
                 </Button>
-              )
+              );
             })}
           </div>
 

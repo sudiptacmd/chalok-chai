@@ -1,6 +1,5 @@
-import mongoose, { Schema, model, models } from "mongoose";
+import { Schema, model, models } from "mongoose";
 import bcrypt from "bcryptjs";
-import { unique } from "next/dist/build/utils";
 
 // Rating Schema for embedded ratings
 const RatingSchema = new Schema({
@@ -158,6 +157,13 @@ const DriverSchema = new Schema({
   ratings: [RatingSchema],
   averageRating: { type: Number, default: 0 },
   totalRides: { type: Number, default: 0 },
+  // Availability: { date: string, status: 'unavailable' | 'booked' }
+  availability: [
+    {
+      date: { type: String, required: true }, // YYYY-MM-DD
+      status: { type: String, enum: ["unavailable", "booked"], required: true },
+    }
+  ],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
@@ -206,7 +212,7 @@ DriverSchema.methods.calculateAverageRating = function () {
   }
 
   const sum = this.ratings.reduce(
-    (acc: number, rating: any) => acc + rating.score,
+    (acc: number, rating: { score: number }) => acc + rating.score,
     0
   );
   this.averageRating = Math.round((sum / this.ratings.length) * 10) / 10;
