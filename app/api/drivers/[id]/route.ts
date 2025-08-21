@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import { Driver } from "@/lib/models";
+import mongoose from "mongoose";
 
 export async function GET(
   _req: Request,
@@ -8,10 +9,16 @@ export async function GET(
 ) {
   try {
     await dbConnect();
-    const driver = await Driver.findById(params.id).populate(
-      "userId",
-      "name profilePhoto emailVerified createdAt"
-    );
+    const identifier = params.id;
+    let driver = await Driver.findOne({
+      drivingLicenseNumber: identifier,
+    }).populate("userId", "name profilePhoto emailVerified createdAt");
+    if (!driver && mongoose.isValidObjectId(identifier)) {
+      driver = await Driver.findById(identifier).populate(
+        "userId",
+        "name profilePhoto emailVerified createdAt"
+      );
+    }
     if (!driver || !driver.approved) {
       return NextResponse.json({ error: "Driver not found" }, { status: 404 });
     }

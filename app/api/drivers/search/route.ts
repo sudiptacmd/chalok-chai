@@ -13,9 +13,9 @@ export async function GET(req: NextRequest) {
       searchParams.get("bookingType") === "monthly" ? "monthly" : "daily";
     const minPrice = Number(searchParams.get("minPrice") || 0);
     const maxPrice = Number(searchParams.get("maxPrice") || 1_000_000);
-    const preferences = searchParams.getAll("preference"); // multiple preference filters
+    const preferences = searchParams.getAll("preference");
     const languages = searchParams.getAll("language");
-    const experience = searchParams.get("experience"); // e.g. 1-2,3-5,5+
+    const experience = searchParams.get("experience");
     const verified = searchParams.get("verified");
     const page = Math.max(1, Number(searchParams.get("page") || 1));
     const limit = Math.min(
@@ -46,7 +46,6 @@ export async function GET(req: NextRequest) {
       // A driver is considered verified if their associated user emailVerified = true and approved = true
     }
 
-    // Experience translation: we approximate with totalRides heuristics (not ideal). Example mapping.
     const experienceMap: Record<string, { min: number; max?: number }> = {
       "1-2": { min: 1, max: 2 },
       "3-5": { min: 3, max: 5 },
