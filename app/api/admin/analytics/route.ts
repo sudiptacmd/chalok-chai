@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import dbConnect from "@/lib/mongodb";
-import { User, Driver, Owner } from "@/lib/models";
+import { User, Driver, Owner, Booking } from "@/lib/models";
 
 // Simple in-memory cache (per server instance) to limit heavy aggregation frequency
 interface RecentBookingRaw {
@@ -73,16 +73,6 @@ export async function GET() {
           completed: { $sum: 1 },
           revenue: { $sum: { $ifNull: ["$bookingHistory.amount", 0] } },
           avgBookingValue: { $avg: { $ifNull: ["$bookingHistory.amount", 0] } },
-          recent: {
-            $push: {
-              driverId: "$bookingHistory.driverId",
-              amount: "$bookingHistory.amount",
-              endDate: "$bookingHistory.endDate",
-              startDate: "$bookingHistory.startDate",
-              status: "$bookingHistory.status",
-              createdAt: "$bookingHistory.createdAt",
-            },
-          },
         },
       },
     ]);
@@ -91,49 +81,22 @@ export async function GET() {
       completed: 0,
       revenue: 0,
       avgBookingValue: 0,
-      recent: [],
     };
 
-    let recentBookings: AnalyticsPayload["recentBookings"] = [];
-    if (completedStats.recent.length) {
-      const recent = (completedStats.recent as RecentBookingRaw[])
-        .sort(
-          (a, b) =>
-            new Date(
-              b.createdAt || b.endDate || b.startDate || new Date(0)
-            ).getTime() -
-            new Date(
-              a.createdAt || a.endDate || a.startDate || new Date(0)
-            ).getTime()
-        )
-        .slice(0, 10);
-      const driverIds = recent
-        .map((r) => r.driverId)
-        .filter(Boolean) as string[];
-      const drivers = await Driver.find({ _id: { $in: driverIds } }).populate(
-        "userId",
-        "name"
-      );
-      interface PopulatedDriver {
-        _id: string;
-        userId?: { name?: string };
-      }
-      const driverMap = new Map<string, string>(
-        (drivers as unknown as PopulatedDriver[]).map((d) => [
-          d._id.toString(),
-          d.userId?.name || "Driver",
-        ])
-      );
-      recentBookings = recent.map((r, i) => ({
-        id: i.toString(),
-        driverName: r.driverId
-          ? driverMap.get(r.driverId.toString()) || "Unknown"
-          : "Unknown",
-        amount: r.amount || 0,
-        date: (r.endDate || r.startDate || r.createdAt || new Date()) as Date,
-        status: r.status || "completed",
-      }));
-    }
+    // Recent bookings section should show ACCEPTED bookings in descending time order
+    const acceptedBookings = await Booking.find({ status: "accepted" })
+      .sort({ updatedAt: -1 })
+      .populate({ path: "driverId", populate: { path: "userId", select: "name" } })
+      .lean();
+
+    interface DriverPopulated { userId?: { name?: string } }
+    const recentBookings: AnalyticsPayload["recentBookings"] = acceptedBookings.map((b: any) => ({
+      id: b._id.toString(),
+      driverName: (b.driverId as DriverPopulated)?.userId?.name || "Driver",
+      amount: b.totalCost || 0,
+      date: b.updatedAt || b.createdAt,
+      status: b.status,
+    }));
 
     const ratingAgg = await Driver.aggregate([
       { $match: { approved: true } },

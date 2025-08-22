@@ -282,3 +282,63 @@ BookingSchema.index({ driverId: 1, status: 1, createdAt: -1 });
 BookingSchema.index({ status: 1, createdAt: -1 });
 
 export const Booking = models.Booking || model("Booking", BookingSchema);
+
+// Support Ticket / Dispute Schema
+const TicketMessageSchema = new Schema({
+  senderUserId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  message: { type: String, required: true, trim: true },
+  createdAt: { type: Date, default: Date.now },
+  internal: { type: Boolean, default: false }, // for admin-only notes
+});
+
+// Helper to generate a reasonably unique human-friendly ticket id
+function generateTicketId(): string {
+  return (
+    "TKT-" +
+    Date.now().toString(36).toUpperCase() +
+    "-" +
+    Math.random().toString(36).slice(2, 6).toUpperCase()
+  );
+}
+
+const TicketSchema = new Schema({
+  ticketId: {
+    type: String,
+    unique: true,
+    sparse: true,
+    default: generateTicketId,
+  },
+  createdByUserId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  // The other participant the complaint is about (driver or owner)
+  againstUserId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  relatedBookingId: { type: Schema.Types.ObjectId, ref: "Booking", default: null },
+  roleContext: { type: String, enum: ["owner", "driver"], required: true },
+  priority: { type: String, enum: ["low", "medium", "high", "urgent"], default: "medium" },
+  status: { type: String, enum: ["open", "pending", "resolved", "closed"], default: "open" },
+  subject: { type: String, required: true, trim: true },
+  messages: [TicketMessageSchema],
+  lastMessageAt: { type: Date, default: Date.now },
+  unreadForAdmin: { type: Boolean, default: true },
+  unreadForCreator: { type: Boolean, default: false },
+  unreadForAgainst: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+});
+
+TicketSchema.pre("save", function (next) {
+  this.updatedAt = new Date();
+  if (this.messages?.length) {
+    this.lastMessageAt = this.messages[this.messages.length - 1].createdAt;
+  }
+  // Ensure ticketId present (belt & suspenders)
+  if (!this.ticketId) {
+    this.ticketId = generateTicketId();
+  }
+  next();
+});
+
+TicketSchema.index({ createdByUserId: 1, lastMessageAt: -1 });
+TicketSchema.index({ againstUserId: 1, lastMessageAt: -1 });
+TicketSchema.index({ status: 1, lastMessageAt: -1 });
+
+export const Ticket = models.Ticket || model("Ticket", TicketSchema);

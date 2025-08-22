@@ -164,7 +164,7 @@ export function PlatformAnalytics() {
                 <CardTitle>Recent Completed Bookings</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-96 overflow-auto pr-2">
                   {data.recentBookings.length === 0 && (
                     <p className="text-sm text-muted-foreground">
                       No recent bookings
