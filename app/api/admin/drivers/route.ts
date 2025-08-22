@@ -16,8 +16,10 @@ export async function GET() {
 
     await dbConnect();
 
-    // Get pending drivers with user information
-    const pendingDrivers = await Driver.find({ approved: false })
+    // Get pending drivers with user information (include legacy docs without 'approved')
+    const pendingDrivers = await Driver.find({
+      $or: [{ approved: false }, { approved: { $exists: false } }],
+    })
       .populate(
         "userId",
         "name email phone emailVerified createdAt profilePhoto"
