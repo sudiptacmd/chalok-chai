@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import dbConnect from "@/lib/mongodb";
-import { Driver } from "@/lib/models";
+import { Driver, User, Booking } from "@/lib/models";
 import { sendDriverApprovalEmail } from "@/lib/email";
 
 // Get pending driver applications (Admin only)
@@ -96,6 +96,79 @@ export async function PATCH(request: NextRequest) {
     });
   } catch (error) {
     console.error("Update driver approval error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// Delete driver and associated user account (Admin only)
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || session.user.type !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const driverId = searchParams.get("driverId");
+    const userId = searchParams.get("userId");
+
+    if (!driverId && !userId) {
+      return NextResponse.json(
+        { error: "Either driver ID or user ID is required" },
+        { status: 400 }
+      );
+    }
+
+    await dbConnect();
+
+    let driver;
+    if (driverId) {
+      driver = await Driver.findById(driverId).populate("userId");
+    } else if (userId) {
+      driver = await Driver.findOne({ userId }).populate("userId");
+    }
+
+    if (!driver) {
+      return NextResponse.json({ error: "Driver not found" }, { status: 404 });
+    }
+
+    // Check if driver has active bookings
+    const activeBookings = await Booking.find({
+      driverId: driver._id,
+      status: { $in: ["pending", "accepted"] },
+    });
+
+    if (activeBookings.length > 0) {
+      return NextResponse.json(
+        { 
+          error: "Cannot delete driver with active bookings. Please complete or cancel all bookings first.",
+          activeBookings: activeBookings.length 
+        },
+        { status: 400 }
+      );
+    }
+
+    // Delete the driver record
+    await Driver.findByIdAndDelete(driver._id);
+
+    // Delete the associated user record
+    await User.findByIdAndDelete(driver.userId._id);
+
+    return NextResponse.json({
+      message: "Driver and user account deleted successfully",
+      deletedDriver: {
+        driverId: driver._id,
+        userId: driver.userId._id,
+        name: driver.userId.name,
+        email: driver.userId.email,
+      },
+    });
+  } catch (error) {
+    console.error("Delete driver error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

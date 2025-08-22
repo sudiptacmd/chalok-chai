@@ -1,7 +1,7 @@
 "use client"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DriverCalendar } from "@/components/driver-calendar"
-import { DriverReviews } from "@/components/driver-reviews"
+import { DriverReviewsTab } from "@/components/driver-reviews-tab"
 
 interface DriverProfileTabsProps {
   driver: any
@@ -20,7 +20,7 @@ export function DriverProfileTabs({ driver }: DriverProfileTabsProps) {
       </TabsContent>
 
       <TabsContent value="reviews" className="mt-6">
-        <DriverReviews reviews={driver.reviews} />
+        <DriverReviewsTab driverId={driver.id} />
       </TabsContent>
     </Tabs>
   )

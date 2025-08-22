@@ -19,6 +19,11 @@ const RatingSchema = new Schema({
     ref: "User",
     required: true,
   },
+  bookingId: {
+    type: Schema.Types.ObjectId,
+    ref: "Booking",
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -255,6 +260,12 @@ const BookingSchema = new Schema({
     type: String,
     enum: ["pending", "accepted", "rejected", "cancelled", "completed"],
     default: "pending",
+  },
+  // Review and rating system
+  review: {
+    rating: { type: Number, min: 1, max: 5, default: null },
+    comment: { type: String, trim: true, default: null },
+    reviewedAt: { type: Date, default: null },
   },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
