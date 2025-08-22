@@ -2,27 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { EnhancedDriverCard } from "@/components/enhanced-driver-card";
-
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
-
+// Driver shape expected by EnhancedDriverCard
 interface Driver {
-  id: string
-  name: string
-  photo: string
-  rating: number
-  reviewCount: number
-  experience: string
-  location: string
-  pricePerDay: number
-  pricePerMonth: number
-  verified: boolean
-  preferences: string[]
-  bio: string
-  availability: Record<string, "available" | "booked" | "unavailable">
+  id: string;
+  name: string;
+  photo: string; // ensure non-null for Image component
+  rating: number;
+  reviewCount: number;
+  experience: string;
+  location: string;
+  pricePerDay: number;
+  pricePerMonth: number;
+  verified: boolean;
+  preferences: string[];
+  bio: string;
+  availability: Record<string, "available" | "booked" | "unavailable">;
 }
-
 
 interface DriverListProps {
   filters: {
@@ -33,32 +31,17 @@ interface DriverListProps {
     experience: string;
     preferences: string[];
   };
-
 }
 
 export function DriverList({ filters }: DriverListProps) {
-  interface DriverItem {
-    id: string;
-    name: string;
-    photo: string | null;
-    rating: number;
-    reviewCount: number;
-    experience: string;
-    location: string;
-    pricePerDay: number | null;
-    pricePerMonth: number | null;
-    verified: boolean;
-    preferences: string[];
-    bio: string;
-    availability: Record<string, string>;
-  }
-  const [drivers, setDrivers] = useState<DriverItem[]>([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
 
+  // Reset pagination when key filters change
   useEffect(() => {
-    // Reset page when filters change
     setPage(1);
   }, [
     filters.location,
@@ -67,6 +50,7 @@ export function DriverList({ filters }: DriverListProps) {
     filters.bookingType,
   ]);
 
+  // Load drivers from server with filters
   useEffect(() => {
     const controller = new AbortController();
     const load = async () => {
@@ -80,15 +64,73 @@ export function DriverList({ filters }: DriverListProps) {
         params.set("minPrice", filters.priceRange[0].toString());
         params.set("maxPrice", filters.priceRange[1].toString());
         params.set("page", page.toString());
+        // preferences as repeated query params
+        for (const pref of filters.preferences || [])
+          params.append("preference", pref);
+
         const res = await fetch(`/api/drivers/search?${params.toString()}`, {
           signal: controller.signal,
         });
         if (!res.ok) throw new Error("Failed to load drivers");
-        const json = await res.json();
-        setDrivers(json.results);
-        setTotal(json.total);
+        type SearchResult = {
+          id: string;
+          name: string;
+          photo: string | null;
+          rating: number;
+          reviewCount: number;
+          experience: string;
+          location: string;
+          pricePerDay: number | null;
+          pricePerMonth: number | null;
+          verified: boolean;
+          preferences: string[];
+          bio: string;
+          availability: Record<string, string>;
+        };
+        type SearchResponse = {
+          page: number;
+          total: number;
+          pageSize: number;
+          results: SearchResult[];
+        };
+        const json: SearchResponse = await res.json();
+
+        const mapped: Driver[] = (json.results || []).map((d) => {
+          const av: Record<string, string> = d.availability || {};
+          const availability = Object.fromEntries(
+            Object.entries(av).map(([k, v]) => [
+              k,
+              v as "available" | "booked" | "unavailable",
+            ])
+          ) as Driver["availability"];
+          return {
+            id: String(d.id),
+            name: d.name || "Unnamed",
+            photo: d.photo || "",
+            rating: typeof d.rating === "number" ? d.rating : 0,
+            reviewCount: typeof d.reviewCount === "number" ? d.reviewCount : 0,
+            experience: d.experience || "",
+            location: d.location || "",
+            pricePerDay: typeof d.pricePerDay === "number" ? d.pricePerDay : 0,
+            pricePerMonth:
+              typeof d.pricePerMonth === "number" ? d.pricePerMonth : 0,
+            verified: Boolean(d.verified),
+            preferences: Array.isArray(d.preferences) ? d.preferences : [],
+            bio: d.bio || "",
+            availability,
+          };
+        });
+
+        setDrivers(mapped);
+        setTotal(Number(json.total || 0));
+        setPageSize(Number(json.pageSize || mapped.length || 20));
       } catch (e) {
-        if (!(e instanceof DOMException && e.name === "AbortError")) {
+        if (
+          !(
+            e instanceof DOMException &&
+            (e as DOMException).name === "AbortError"
+          )
+        ) {
           console.error(e);
         }
       } finally {
@@ -102,44 +144,11 @@ export function DriverList({ filters }: DriverListProps) {
     filters.experience,
     filters.priceRange,
     filters.bookingType,
+    filters.preferences,
     page,
   ]);
 
-  date?: string; // Pass selected date for filtering
-}
-
-export function DriverList({ filters }: DriverListProps) {
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-
-  useEffect(() => {
-    // Use today's date for filtering by default
-    const today = new Date().toISOString().split("T")[0];
-    fetch(`/api/drivers?date=${today}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setDrivers(data.drivers || []);
-      });
-  }, [filters]);
-
-  // Filter drivers client-side for location, price, experience, preferences
-  const filteredDrivers = drivers.filter((driver) => {
-    if (filters.location && !driver.location?.toLowerCase().includes(filters.location.toLowerCase())) {
-      return false;
-    }
-    const price = filters.bookingType === "daily" ? driver.pricePerDay : driver.pricePerMonth;
-    if (price < filters.priceRange[0] || price > filters.priceRange[1]) {
-      return false;
-    }
-    if (filters.experience && !driver.experience?.includes(filters.experience)) {
-      return false;
-    }
-    if (filters.preferences.length > 0) {
-      const hasPreference = filters.preferences.some((pref) => driver.preferences?.includes(pref));
-      if (!hasPreference) return false;
-    }
-    return true;
-  });
-
+  const canGoNext = page * pageSize < total;
 
   return (
     <div className="space-y-4">
@@ -187,7 +196,7 @@ export function DriverList({ filters }: DriverListProps) {
           variant="outline"
           size="sm"
           onClick={() => setPage((p) => p + 1)}
-          disabled={drivers.length === 0 || loading}
+          disabled={!canGoNext || loading}
           className="bg-transparent"
         >
           Next
