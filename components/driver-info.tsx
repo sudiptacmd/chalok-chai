@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,33 +12,53 @@ import { Edit, Save, X, Upload, Shield } from "lucide-react"
 
 export function DriverInfo() {
   const [isEditing, setIsEditing] = useState(false)
-  const [driverData, setDriverData] = useState({
-    name: "Ahmed Rahman",
-    email: "ahmed.rahman@example.com",
-    phone: "+880 1234-567890",
-    dateOfBirth: "1985-03-15",
-    nationalId: "1234567890123",
-    drivingLicense: "DL123456789",
-    location: "Dhaka, Dhanmondi",
-    bio: "Professional driver with 5+ years of experience. Safe and reliable driving with excellent knowledge of Dhaka roads.",
-    experience: "5+ years",
-    pricePerDay: 1500,
-    pricePerMonth: 35000,
-    languages: ["Bengali", "English"],
-    preferences: ["Non-smoker", "English speaking", "Pet-friendly"],
-    verified: true,
-  })
+  const [driverData, setDriverData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSave = () => {
-    // Handle profile update
-    console.log("Driver profile updated:", driverData)
-    setIsEditing(false)
+  useEffect(() => {
+    async function fetchProfile() {
+      setLoading(true)
+      setError(null)
+      try {
+        const res = await fetch("/api/profile")
+        if (!res.ok) throw new Error("Failed to fetch profile")
+        const { profile } = await res.json()
+        setDriverData(profile)
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProfile()
+  }, [])
+
+  const handleSave = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(driverData),
+      })
+      if (!res.ok) throw new Error("Failed to update profile")
+      setIsEditing(false)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleCancel = () => {
-    // Reset form data
     setIsEditing(false)
   }
+
+  if (loading) return <div>Loading...</div>
+  if (error) return <div className="text-red-500">{error}</div>
+  if (!driverData) return <div>No profile data found.</div>
 
   return (
     <div className="space-y-6">
@@ -72,9 +92,8 @@ export function DriverInfo() {
               <Avatar className="h-20 w-20">
                 <AvatarFallback className="text-lg">
                   {driverData.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
+                    ? driverData.name.split(" ").map((n: string) => n[0]).join("")
+                    : "?"}
                 </AvatarFallback>
               </Avatar>
               {driverData.verified && (
@@ -103,7 +122,7 @@ export function DriverInfo() {
                 <Label htmlFor="name">Full Name</Label>
                 <Input
                   id="name"
-                  value={driverData.name}
+                  value={driverData.name || ""}
                   onChange={(e) => setDriverData({ ...driverData, name: e.target.value })}
                   disabled={!isEditing}
                 />
@@ -114,7 +133,7 @@ export function DriverInfo() {
                 <Input
                   id="email"
                   type="email"
-                  value={driverData.email}
+                  value={driverData.email || ""}
                   onChange={(e) => setDriverData({ ...driverData, email: e.target.value })}
                   disabled={!isEditing}
                 />
@@ -124,7 +143,7 @@ export function DriverInfo() {
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
                   id="phone"
-                  value={driverData.phone}
+                  value={driverData.phone || ""}
                   onChange={(e) => setDriverData({ ...driverData, phone: e.target.value })}
                   disabled={!isEditing}
                 />
@@ -135,7 +154,7 @@ export function DriverInfo() {
                 <Input
                   id="dateOfBirth"
                   type="date"
-                  value={driverData.dateOfBirth}
+                  value={driverData.dateOfBirth ? driverData.dateOfBirth.slice(0, 10) : ""}
                   onChange={(e) => setDriverData({ ...driverData, dateOfBirth: e.target.value })}
                   disabled={!isEditing}
                 />
@@ -145,7 +164,7 @@ export function DriverInfo() {
                 <Label htmlFor="location">Location</Label>
                 <Input
                   id="location"
-                  value={driverData.location}
+                  value={driverData.location || ""}
                   onChange={(e) => setDriverData({ ...driverData, location: e.target.value })}
                   disabled={!isEditing}
                 />
@@ -157,7 +176,7 @@ export function DriverInfo() {
                 <Label htmlFor="nationalId">National ID</Label>
                 <Input
                   id="nationalId"
-                  value={driverData.nationalId}
+                  value={driverData.nationalId || ""}
                   onChange={(e) => setDriverData({ ...driverData, nationalId: e.target.value })}
                   disabled={!isEditing}
                 />
@@ -167,8 +186,8 @@ export function DriverInfo() {
                 <Label htmlFor="drivingLicense">Driving License</Label>
                 <Input
                   id="drivingLicense"
-                  value={driverData.drivingLicense}
-                  onChange={(e) => setDriverData({ ...driverData, drivingLicense: e.target.value })}
+                  value={driverData.drivingLicenseNumber || ""}
+                  onChange={(e) => setDriverData({ ...driverData, drivingLicenseNumber: e.target.value })}
                   disabled={!isEditing}
                 />
               </div>
@@ -177,7 +196,7 @@ export function DriverInfo() {
                 <Label htmlFor="experience">Experience</Label>
                 <Input
                   id="experience"
-                  value={driverData.experience}
+                  value={driverData.experience || ""}
                   onChange={(e) => setDriverData({ ...driverData, experience: e.target.value })}
                   disabled={!isEditing}
                 />
@@ -189,9 +208,9 @@ export function DriverInfo() {
                   <Input
                     id="pricePerDay"
                     type="number"
-                    value={driverData.pricePerDay}
+                    value={driverData.pricePerDay || ""}
                     onChange={(e) =>
-                      setDriverData({ ...driverData, pricePerDay: Number.parseInt(e.target.value) || 0 })
+                      setDriverData({ ...driverData, pricePerDay: Number(e.target.value) || null })
                     }
                     disabled={!isEditing}
                   />
@@ -202,9 +221,9 @@ export function DriverInfo() {
                   <Input
                     id="pricePerMonth"
                     type="number"
-                    value={driverData.pricePerMonth}
+                    value={driverData.pricePerMonth || ""}
                     onChange={(e) =>
-                      setDriverData({ ...driverData, pricePerMonth: Number.parseInt(e.target.value) || 0 })
+                      setDriverData({ ...driverData, pricePerMonth: Number(e.target.value) || null })
                     }
                     disabled={!isEditing}
                   />
@@ -218,7 +237,7 @@ export function DriverInfo() {
               <Label htmlFor="bio">Bio</Label>
               <Textarea
                 id="bio"
-                value={driverData.bio}
+                value={driverData.bio || ""}
                 onChange={(e) => setDriverData({ ...driverData, bio: e.target.value })}
                 disabled={!isEditing}
                 rows={4}
@@ -226,25 +245,59 @@ export function DriverInfo() {
             </div>
 
             <div className="space-y-2">
-              <Label>Languages</Label>
-              <div className="flex flex-wrap gap-2">
-                {driverData.languages.map((language) => (
-                  <Badge key={language} variant="outline">
-                    {language}
-                  </Badge>
-                ))}
-              </div>
+              <Label htmlFor="languages">Languages</Label>
+              {isEditing ? (
+                <Input
+                  id="languages"
+                  value={(driverData.languages || []).join(", ")}
+                  onChange={e => {
+                    // Allow spaces and commas, split by comma
+                    const value = e.target.value;
+                    const arr = value
+                      .split(",")
+                      .map((l: string) => l.trim())
+                      .filter((l: string) => l.length > 0);
+                    setDriverData({ ...driverData, languages: arr });
+                  }}
+                  placeholder="e.g. Bengali, English, Hindi"
+                />
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {(driverData.languages || []).map((language: string) => (
+                    <Badge key={language} variant="outline">
+                      {language}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label>Preferences</Label>
-              <div className="flex flex-wrap gap-2">
-                {driverData.preferences.map((preference) => (
-                  <Badge key={preference} variant="secondary">
-                    {preference}
-                  </Badge>
-                ))}
-              </div>
+              <Label htmlFor="preferences">Preferences</Label>
+              {isEditing ? (
+                <Input
+                  id="preferences"
+                  value={(driverData.preferences || []).join(", ")}
+                  onChange={e => {
+                    // Allow spaces and commas, split by comma
+                    const value = e.target.value;
+                    const arr = value
+                      .split(",")
+                      .map((p: string) => p.trim())
+                      .filter((p: string) => p.length > 0);
+                    setDriverData({ ...driverData, preferences: arr });
+                  }}
+                  placeholder="e.g. Non-smoker, English speaking, Pet-friendly"
+                />
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {(driverData.preferences || []).map((preference: string) => (
+                    <Badge key={preference} variant="secondary">
+                      {preference}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </CardContent>

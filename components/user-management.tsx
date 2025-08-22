@@ -1,88 +1,122 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Ban, UserCheck, Users, Car } from "lucide-react"
+import { Search, Ban, UserCheck, Users, Car, Star, MapPin, Loader2 } from "lucide-react"
 
-// Mock users data
-const mockUsers = [
-  {
-    id: "1",
-    name: "Sarah Ahmed",
-    email: "sarah.ahmed@example.com",
-    phone: "+880 1234-567890",
-    type: "car_owner",
-    status: "active",
-    joinedDate: "2024-01-05",
-    totalBookings: 12,
-    lastActive: "2024-01-15",
-  },
-  {
-    id: "2",
-    name: "Ahmed Rahman",
-    email: "ahmed.rahman@example.com",
-    phone: "+880 1987-654321",
-    type: "driver",
-    status: "active",
-    joinedDate: "2023-12-20",
-    totalBookings: 45,
-    lastActive: "2024-01-14",
-    verified: true,
-  },
-  {
-    id: "3",
-    name: "Karim Hassan",
-    email: "karim.hassan@example.com",
-    phone: "+880 1555-123456",
-    type: "car_owner",
-    status: "suspended",
-    joinedDate: "2024-01-01",
-    totalBookings: 3,
-    lastActive: "2024-01-10",
-  },
-  {
-    id: "4",
-    name: "Rashida Begum",
-    email: "rashida.begum@example.com",
-    phone: "+880 1777-987654",
-    type: "driver",
-    status: "active",
-    joinedDate: "2023-11-15",
-    totalBookings: 67,
-    lastActive: "2024-01-15",
-    verified: true,
-  },
-]
+interface User {
+  _id: string
+  name: string
+  email: string
+  phone: string
+  type: "owner" | "driver"
+  status: "active" | "inactive" | "pending"
+  emailVerified: boolean
+  suspended?: boolean
+  createdAt: string
+  profilePhoto?: string
+  approved?: boolean
+  location?: string
+  averageRating?: number
+  totalRides?: number
+  totalBookings?: number
+}
 
 export function UserManagement() {
-  const [users, setUsers] = useState(mockUsers)
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterType, setFilterType] = useState("all")
   const [filterStatus, setFilterStatus] = useState("all")
 
-  const handleSuspendUser = (userId: string) => {
-    setUsers(users.map((user) => (user.id === userId ? { ...user, status: "suspended" } : user)))
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/users")
+      if (response.ok) {
+        const data = await response.json()
+        setUsers(data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleActivateUser = (userId: string) => {
-    setUsers(users.map((user) => (user.id === userId ? { ...user, status: "active" } : user)))
+  const handleUserAction = async (userId: string, action: "suspend" | "activate") => {
+    try {
+      setActionLoading(userId)
+      const response = await fetch("/api/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, action }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        // Update local state based on the API response
+        setUsers(users.map((user) => 
+          user._id === userId 
+            ? { 
+                ...user, 
+                suspended: result.user.suspended,
+                status: result.user.suspended ? "inactive" : 
+                  (user.type === "driver" ? (user.approved ? "active" : "pending") : 
+                   (user.emailVerified ? "active" : "inactive"))
+              }
+            : user
+        ))
+      }
+    } catch (error) {
+      console.error(`Failed to ${action} user:`, error)
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  // Helper function to filter valid users (excluding unapproved drivers)
+  const getValidUsers = () => {
+    return users.filter(u => u.type === "owner" || (u.type === "driver" && u.approved))
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
         return "bg-green-500/20 text-green-700"
-      case "suspended":
-        return "bg-red-500/20 text-red-700"
       case "inactive":
-        return "bg-gray-500/20 text-gray-700"
+        return "bg-red-500/20 text-red-700"
+      case "pending":
+        return "bg-yellow-500/20 text-yellow-700"
       default:
         return "bg-gray-500/20 text-gray-700"
+    }
+  }
+
+  const getStatusBadge = (user: User) => {
+    if (user.suspended) {
+      return { text: "Suspended", color: "bg-red-500/20 text-red-700" }
+    }
+    
+    switch (user.status) {
+      case "active":
+        return { text: "Active", color: "bg-green-500/20 text-green-700" }
+      case "inactive":
+        return { text: "Inactive", color: "bg-red-500/20 text-red-700" }
+      case "pending":
+        return { text: "Pending", color: "bg-yellow-500/20 text-yellow-700" }
+      default:
+        return { text: "Unknown", color: "bg-gray-500/20 text-gray-700" }
     }
   }
 
@@ -95,13 +129,92 @@ export function UserManagement() {
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesType = filterType === "all" || user.type === filterType
-    const matchesStatus = filterStatus === "all" || user.status === filterStatus
+    
+    let matchesStatus = filterStatus === "all"
+    if (!matchesStatus) {
+      if (filterStatus === "suspended") {
+        matchesStatus = user.suspended === true
+      } else if (filterStatus === "active") {
+        matchesStatus = user.status === "active" && !user.suspended
+        // For drivers, also check approval status
+        if (user.type === "driver") {
+          matchesStatus = matchesStatus && user.approved === true
+        }
+      } else {
+        matchesStatus = user.status === filterStatus && !user.suspended
+      }
+    }
 
     return matchesSearch && matchesType && matchesStatus
   })
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading users...</span>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Users className="h-8 w-8 text-blue-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Total Users</p>
+                <p className="text-2xl font-bold">
+                  {getValidUsers().length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Car className="h-8 w-8 text-green-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Approved Drivers</p>
+                <p className="text-2xl font-bold">
+                  {users.filter(u => u.type === "driver" && u.approved).length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Users className="h-8 w-8 text-purple-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Car Owners</p>
+                <p className="text-2xl font-bold">
+                  {users.filter(u => u.type === "owner").length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <UserCheck className="h-8 w-8 text-orange-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Active Users</p>
+                <p className="text-2xl font-bold">
+                  {getValidUsers().filter(u => u.status === "active").length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Filters */}
       <Card>
         <CardHeader>
@@ -124,7 +237,7 @@ export function UserManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="car_owner">Car Owners</SelectItem>
+                <SelectItem value="owner">Car Owners</SelectItem>
                 <SelectItem value="driver">Drivers</SelectItem>
               </SelectContent>
             </Select>
@@ -135,9 +248,22 @@ export function UserManagement() {
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="suspended">Suspended</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setFilterType("driver")
+                setFilterStatus("active")
+              }}
+              className="whitespace-nowrap"
+            >
+              <Car className="h-4 w-4 mr-2" />
+              Approved Drivers
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -152,7 +278,7 @@ export function UserManagement() {
             {filteredUsers.map((user) => {
               const TypeIcon = getTypeIcon(user.type)
               return (
-                <div key={user.id} className="border rounded-lg p-4 space-y-4">
+                <div key={user._id} className="border rounded-lg p-4 space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <Avatar>
@@ -167,59 +293,84 @@ export function UserManagement() {
                         <div className="flex items-center space-x-2">
                           <h3 className="font-semibold">{user.name}</h3>
                           <TypeIcon className="h-4 w-4 text-muted-foreground" />
-                          {user.type === "driver" && user.verified && (
+                          {user.type === "driver" && user.approved && (
                             <Badge variant="secondary" className="bg-green-500/20 text-green-700">
-                              Verified
+                              Approved
                             </Badge>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">{user.email}</p>
                         <p className="text-sm text-muted-foreground">{user.phone}</p>
+                        {user.type === "driver" && user.location && (
+                          <p className="text-sm text-muted-foreground flex items-center">
+                            <MapPin className="h-3 w-3 mr-1" />
+                            {user.location}
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <Badge className={getStatusColor(user.status)}>
-                      {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                    <Badge className={getStatusBadge(user).color}>
+                      {getStatusBadge(user).text}
                     </Badge>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">Type:</span>
-                      <div className="font-medium capitalize">{user.type.replace("_", " ")}</div>
+                      <div className="font-medium capitalize">{user.type === "owner" ? "Car Owner" : "Driver"}</div>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Joined:</span>
-                      <div className="font-medium">{new Date(user.joinedDate).toLocaleDateString()}</div>
+                      <div className="font-medium">{new Date(user.createdAt).toLocaleDateString()}</div>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Total Bookings:</span>
-                      <div className="font-medium">{user.totalBookings}</div>
+                      <span className="text-muted-foreground">
+                        {user.type === "driver" ? "Total Rides:" : "Total Bookings:"}
+                      </span>
+                      <div className="font-medium">
+                        {user.type === "driver" ? user.totalRides || 0 : user.totalBookings || 0}
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">Last Active:</span>
-                      <div className="font-medium">{new Date(user.lastActive).toLocaleDateString()}</div>
-                    </div>
+                    {user.type === "driver" && user.averageRating !== undefined && (
+                      <div>
+                        <span className="text-muted-foreground">Rating:</span>
+                        <div className="font-medium flex items-center">
+                          <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" />
+                          {user.averageRating.toFixed(1)}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    {user.status === "active" ? (
+                    {!user.suspended ? (
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleSuspendUser(user.id)}
+                        onClick={() => handleUserAction(user._id, "suspend")}
+                        disabled={actionLoading === user._id}
                         className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
                       >
-                        <Ban className="h-4 w-4 mr-2" />
+                        {actionLoading === user._id ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Ban className="h-4 w-4 mr-2" />
+                        )}
                         Suspend User
                       </Button>
                     ) : (
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleActivateUser(user.id)}
+                        onClick={() => handleUserAction(user._id, "activate")}
+                        disabled={actionLoading === user._id}
                         className="bg-transparent"
                       >
-                        <UserCheck className="h-4 w-4 mr-2" />
+                        {actionLoading === user._id ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <UserCheck className="h-4 w-4 mr-2" />
+                        )}
                         Activate User
                       </Button>
                     )}

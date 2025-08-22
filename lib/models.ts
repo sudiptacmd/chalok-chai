@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, models } from "mongoose";
+import { Schema, model, models } from "mongoose";
 import bcrypt from "bcryptjs";
 
 // Rating Schema for embedded ratings
@@ -58,6 +58,10 @@ const UserSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  suspended: {
+    type: Boolean,
+    default: false,
+  },
   emailVerificationToken: {
     type: String,
     default: null,
@@ -92,6 +96,12 @@ const OwnerSchema = new Schema({
     required: true,
     unique: true,
   },
+  // Profile fields
+  name: { type: String, default: null },
+  email: { type: String, default: null },
+  phone: { type: String, default: null },
+  address: { type: String, default: null },
+  // Booking and ratings
   bookingHistory: [
     {
       driverId: {
@@ -131,106 +141,36 @@ const DriverSchema = new Schema({
     required: true,
     unique: true,
   },
-  nationalId: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-  },
-  drivingLicenseNumber: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-  },
-  drivingLicensePhoto: {
-    type: String,
-    default: null,
-  },
-  location: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  bio: {
-    type: String,
-    trim: true,
-    default: "",
-  },
-  dateOfBirth: {
-    type: Date,
-    required: true,
-  },
-  // Pricing & commercial fields
-  pricePerDay: {
-    type: Number,
-    default: 0,
-    min: 0,
-  },
-  pricePerMonth: {
-    type: Number,
-    default: 0,
-    min: 0,
-  },
-  // Years of professional driving experience
-  experienceYears: {
-    type: Number,
-    default: 0,
-    min: 0,
-  },
-  // Driver self-declared or platform tagged preferences (e.g., Non-smoker, English speaking)
-  preferences: {
-    type: [String],
-    default: [],
-  },
-  // Languages the driver can communicate in
-  languages: {
-    type: [String],
-    default: [],
-  },
-  // Vehicle types the driver is comfortable with
-  vehicleTypes: {
-    type: [String],
-    default: [],
-  },
-  // Availability calendar entries (denormalized for quick lookups)
-  availability: {
-    type: [
-      new Schema(
-        {
-          date: { type: Date, required: true },
-          status: {
-            type: String,
-            enum: ["available", "booked", "unavailable"],
-            default: "available",
-          },
-        },
-        { _id: false }
-      ),
-    ],
-    default: [],
-  },
-  approved: {
-    type: Boolean,
-    default: false,
-  },
+
+  // Profile fields
+  name: { type: String, default: null },
+  email: { type: String, default: null, required: true },
+  phone: { type: String, default: null, required: true },
+  dateOfBirth: { type: Date, default: null, required: true },
+  nationalId: { type: String, default: null, required: true, unique: true },
+  drivingLicenseNumber: { type: String, default: null, required: true, unique: true },
+  drivingLicensePhoto: { type: String, default: null },
+  location: { type: String, default: null, required: true },
+  bio: { type: String, default: null },
+  languages: { type: [String], default: [] },
+  preferences: { type: [String], default: [] },
+  experience: { type: String, default: null },
+  pricePerDay: { type: Number, default: null },
+  pricePerMonth: { type: Number, default: null },
+  // Other fields
+
   ratings: [RatingSchema],
-  averageRating: {
-    type: Number,
-    default: 0,
-  },
-  totalRides: {
-    type: Number,
-    default: 0,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
+  averageRating: { type: Number, default: 0 },
+  totalRides: { type: Number, default: 0 },
+  // Availability: { date: string, status: 'unavailable' | 'booked' }
+  availability: [
+    {
+      date: { type: String, required: true }, // YYYY-MM-DD
+      status: { type: String, enum: ["unavailable", "booked"], required: true },
+    }
+  ],
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
 
 // Pre-save middleware to hash password
@@ -277,7 +217,9 @@ DriverSchema.methods.calculateAverageRating = function () {
   }
 
   const sum = this.ratings.reduce(
-    (acc: number, rating: { score: number }) => acc + (rating?.score || 0),
+
+    (acc: number, rating: { score: number }) => acc + rating.score,
+
     0
   );
   this.averageRating = Math.round((sum / this.ratings.length) * 10) / 10;

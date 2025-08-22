@@ -7,22 +7,25 @@ import { uploadImageToCloudinary } from "@/lib/cloudinary";
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
+  const formData = await request.formData();
 
-    const name = formData.get("name") as string;
-    const email = formData.get("email") as string;
-    const phone = formData.get("phone") as string;
-    const dateOfBirth = formData.get("dateOfBirth") as string;
-    const nationalId = formData.get("nationalId") as string;
-    const drivingLicenseNumber = formData.get("drivingLicenseNumber") as string;
-    const location = formData.get("location") as string;
-    const bio = formData.get("bio") as string;
-    const password = formData.get("password") as string;
-    const confirmPassword = formData.get("confirmPassword") as string;
-    const profilePhoto = formData.get("profilePhoto") as File | null;
-    const drivingLicensePhoto = formData.get(
-      "drivingLicensePhoto"
-    ) as File | null;
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const phone = formData.get("phone") as string;
+  const dateOfBirth = formData.get("dateOfBirth") as string;
+  const nationalId = formData.get("nationalId") as string;
+  const drivingLicenseNumber = formData.get("drivingLicenseNumber") as string;
+  const location = formData.get("location") as string;
+  const bio = formData.get("bio") as string;
+  const experience = formData.get("experience") as string | null;
+  const pricePerDay = formData.get("pricePerDay") as string | null;
+  const pricePerMonth = formData.get("pricePerMonth") as string | null;
+  const languages = formData.getAll("languages") as string[] | null;
+  const preferences = formData.getAll("preferences") as string[] | null;
+  const password = formData.get("password") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
+  const profilePhoto = formData.get("profilePhoto") as File | null;
+  const drivingLicensePhoto = formData.get("drivingLicensePhoto") as File | null;
 
     // Validate input
     if (
@@ -173,12 +176,20 @@ export async function POST(request: NextRequest) {
     // Create driver profile
     const driver = new Driver({
       userId: savedUser._id,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone.trim(),
+      dateOfBirth: dob,
       nationalId: nationalId.trim(),
       drivingLicenseNumber: drivingLicenseNumber.trim(),
       drivingLicensePhoto: drivingLicensePhotoUrl,
       location: location.trim(),
-      bio: bio?.trim() || "",
-      dateOfBirth: dob,
+      bio: bio?.trim() || null,
+      experience: experience || null,
+      pricePerDay: pricePerDay ? Number(pricePerDay) : null,
+      pricePerMonth: pricePerMonth ? Number(pricePerMonth) : null,
+      languages: languages && languages.length > 0 ? languages : [],
+      preferences: preferences && preferences.length > 0 ? preferences : [],
       approved: false, // Requires admin approval
     });
 

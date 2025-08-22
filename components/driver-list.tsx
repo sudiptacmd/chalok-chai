@@ -2,8 +2,27 @@
 
 import { useEffect, useState } from "react";
 import { EnhancedDriverCard } from "@/components/enhanced-driver-card";
+
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+
+
+interface Driver {
+  id: string
+  name: string
+  photo: string
+  rating: number
+  reviewCount: number
+  experience: string
+  location: string
+  pricePerDay: number
+  pricePerMonth: number
+  verified: boolean
+  preferences: string[]
+  bio: string
+  availability: Record<string, "available" | "booked" | "unavailable">
+}
+
 
 interface DriverListProps {
   filters: {
@@ -14,6 +33,7 @@ interface DriverListProps {
     experience: string;
     preferences: string[];
   };
+
 }
 
 export function DriverList({ filters }: DriverListProps) {
@@ -84,6 +104,42 @@ export function DriverList({ filters }: DriverListProps) {
     filters.bookingType,
     page,
   ]);
+
+  date?: string; // Pass selected date for filtering
+}
+
+export function DriverList({ filters }: DriverListProps) {
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+
+  useEffect(() => {
+    // Use today's date for filtering by default
+    const today = new Date().toISOString().split("T")[0];
+    fetch(`/api/drivers?date=${today}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setDrivers(data.drivers || []);
+      });
+  }, [filters]);
+
+  // Filter drivers client-side for location, price, experience, preferences
+  const filteredDrivers = drivers.filter((driver) => {
+    if (filters.location && !driver.location?.toLowerCase().includes(filters.location.toLowerCase())) {
+      return false;
+    }
+    const price = filters.bookingType === "daily" ? driver.pricePerDay : driver.pricePerMonth;
+    if (price < filters.priceRange[0] || price > filters.priceRange[1]) {
+      return false;
+    }
+    if (filters.experience && !driver.experience?.includes(filters.experience)) {
+      return false;
+    }
+    if (filters.preferences.length > 0) {
+      const hasPreference = filters.preferences.some((pref) => driver.preferences?.includes(pref));
+      if (!hasPreference) return false;
+    }
+    return true;
+  });
+
 
   return (
     <div className="space-y-4">
