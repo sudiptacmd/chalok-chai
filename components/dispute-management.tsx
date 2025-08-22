@@ -172,11 +172,7 @@ export const DisputeManagement: React.FC = () => {
                         <span>#{t._id.slice(-6)}</span>
                         <span className="truncate max-w-[140px]">By: {t.createdByUserId?.name || t.createdByUserId?.email}</span>
                         <span className="truncate max-w-[140px]">Vs: {t.againstUserId?.name || t.againstUserId?.email}</span>
-                        {t.relatedBookingId && (
-                          <span className="text-blue-500/80" title={t.relatedBookingId.pickupLocation || 'Trip'}>
-                            Trip
-                          </span>
-                        )}
+                        {t.relatedBookingId && <span className="text-blue-500/80">Trip</span>}
                       </div>
                     </div>
                     <div className="text-[10px] text-muted-foreground whitespace-nowrap">
@@ -223,7 +219,7 @@ export const DisputeManagement: React.FC = () => {
                 <span><strong>Against:</strong> {active.againstUserId?.name || active.againstUserId?.email}</span>
                 {active.relatedBookingId && (
                   <span>
-                    <strong>Trip:</strong> {active.relatedBookingId.bookingType} • {active.relatedBookingId.status} {active.relatedBookingId.startDate ? ' • '+ new Date(active.relatedBookingId.startDate).toLocaleDateString(): ''} {active.relatedBookingId.pickupLocation ? ' • '+active.relatedBookingId.pickupLocation : ''}
+                    <strong>Trip:</strong> {active.relatedBookingId.bookingType} • {active.relatedBookingId.status} {active.relatedBookingId.startDate ? ' • '+ new Date(active.relatedBookingId.startDate).toLocaleDateString(): ''}
                   </span>
                 )}
                 <span><strong>Created:</strong> {new Date(active.createdAt).toLocaleString()}</span>

@@ -82,12 +82,7 @@ export const CreateTicketForm: React.FC<Props> = ({ onCreated }) => {
           priority,
         }),
       });
-      let data: any = null;
-      try {
-        data = await res.json();
-      } catch {
-        // non-JSON or empty body
-      }
+      const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create ticket");
 
       setSuccess("Ticket created");
@@ -123,7 +118,7 @@ export const CreateTicketForm: React.FC<Props> = ({ onCreated }) => {
         <div className="mb-6">
           <h1 className="text-2xl font-semibold tracking-tight">Help &amp; Support</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Create a ticket for booking issues, payments, or disputes. Linking a trip is optional.
+            Create a ticket for booking issues, payments, or disputes. Our team will follow up.
           </p>
         </div>
 

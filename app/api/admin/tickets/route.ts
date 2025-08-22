@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     .populate("againstUserId", "name email type")
     .populate({
       path: "relatedBookingId",
-      select: "bookingType selectedDates startDate endDate status totalCost driverId ownerUserId pickupLocation",
+      select: "bookingType selectedDates startDate endDate status totalCost driverId ownerUserId",
       populate: [
         { path: "ownerUserId", select: "name email" },
         { path: "driverId", populate: { path: "userId", select: "name email" } },
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     .populate("againstUserId", "name email type")
     .populate({
       path: "relatedBookingId",
-      select: "bookingType selectedDates startDate endDate status totalCost driverId ownerUserId pickupLocation",
+      select: "bookingType selectedDates startDate endDate status totalCost driverId ownerUserId",
       populate: [
         { path: "ownerUserId", select: "name email" },
         { path: "driverId", populate: { path: "userId", select: "name email" } },
