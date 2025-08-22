@@ -6,9 +6,109 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Car } from "lucide-react";
 import { MobileNav } from "@/components/mobile-nav";
 import { UserButton } from "@/components/user-button";
+import { useSession } from "next-auth/react";
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { data: session } = useSession();
+
+  const userType = session?.user?.type as
+    | "admin"
+    | "owner"
+    | "driver"
+    | undefined;
+
+  const renderNavLinks = () => {
+    if (userType === "admin") {
+      return (
+        <>
+          <Link
+            href="/admin"
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
+            Admin Dashboard
+          </Link>
+        </>
+      );
+    }
+    if (userType === "owner") {
+      return (
+        <>
+          <Link
+            href="/find-driver"
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
+            Find Driver
+          </Link>
+          <Link
+            href="/dashboard"
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
+            Dashboard
+          </Link>
+          <Link
+            href="/messeges"
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
+            Messeges
+          </Link>
+          <Link
+            href="/help"
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
+            Get Help
+          </Link>
+        </>
+      );
+    }
+    if (userType === "driver") {
+      return (
+        <>
+          <Link
+            href="/driver-dashboard"
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
+            Driver Dashboard
+          </Link>
+          <Link
+            href="/messeges"
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
+            Messeges
+          </Link>
+          <Link
+            href="/help"
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
+            Get Help
+          </Link>
+        </>
+      );
+    }
+    // Logged out: show default marketing links
+    return (
+      <>
+        <Link
+          href="/find-driver"
+          className="text-sm font-medium hover:text-primary transition-colors"
+        >
+          Find Driver
+        </Link>
+        <Link
+          href="/become-driver"
+          className="text-sm font-medium hover:text-primary transition-colors"
+        >
+          Become a Driver
+        </Link>
+        <Link
+          href="/about"
+          className="text-sm font-medium hover:text-primary transition-colors"
+        >
+          About
+        </Link>
+      </>
+    );
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -20,26 +120,9 @@ export function Header() {
             <span className="text-xl font-bold">ChalokChai</span>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation (role-based) */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link
-              href="/find-driver"
-              className="text-sm font-medium hover:text-primary transition-colors"
-            >
-              Find Driver
-            </Link>
-            <Link
-              href="/become-driver"
-              className="text-sm font-medium hover:text-primary transition-colors"
-            >
-              Become a Driver
-            </Link>
-            <Link
-              href="/about"
-              className="text-sm font-medium hover:text-primary transition-colors"
-            >
-              About
-            </Link>
+            {renderNavLinks()}
           </nav>
 
           {/* Desktop Auth Buttons / User Button */}

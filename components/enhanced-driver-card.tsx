@@ -1,40 +1,44 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Star, MapPin, Shield, Calendar } from "lucide-react"
-import { EnhancedBookingModal } from "@/components/enhanced-booking-modal"
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Star, MapPin, Shield, Calendar } from "lucide-react";
+import { EnhancedBookingModal } from "@/components/enhanced-booking-modal";
 
 interface Driver {
-  id: string
-  name: string
-  photo: string
-  rating: number
-  reviewCount: number
-  experience: string
-  location: string
-  pricePerDay: number
-  pricePerMonth: number
-  verified: boolean
-  preferences: string[]
-  bio: string
-  availability: Record<string, "available" | "booked" | "unavailable">
+  id: string;
+  name: string;
+  photo: string;
+  rating: number;
+  reviewCount: number;
+  experience: string;
+  location: string;
+  pricePerDay: number;
+  pricePerMonth: number;
+  verified: boolean;
+  preferences: string[];
+  bio: string;
+  availability: Record<string, "available" | "booked" | "unavailable">;
 }
 
 interface EnhancedDriverCardProps {
-  driver: Driver
-  bookingType: "daily" | "monthly"
+  driver: Driver;
+  bookingType: "daily" | "monthly";
 }
 
-export function EnhancedDriverCard({ driver, bookingType }: EnhancedDriverCardProps) {
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
+export function EnhancedDriverCard({
+  driver,
+  bookingType,
+}: EnhancedDriverCardProps) {
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
-  const price = bookingType === "daily" ? driver.pricePerDay : driver.pricePerMonth
-  const priceLabel = bookingType === "daily" ? "per day" : "per month"
+  const price =
+    bookingType === "daily" ? driver.pricePerDay : driver.pricePerMonth;
+  const priceLabel = bookingType === "daily" ? "per day" : "per month";
 
   return (
     <>
@@ -70,8 +74,12 @@ export function EnhancedDriverCard({ driver, bookingType }: EnhancedDriverCardPr
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold">৳{price.toLocaleString()}</div>
-                  <div className="text-sm text-muted-foreground">{priceLabel}</div>
+                  <div className="text-2xl font-bold">
+                    ৳{price.toLocaleString()}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {priceLabel}
+                  </div>
                 </div>
               </div>
 
@@ -80,7 +88,9 @@ export function EnhancedDriverCard({ driver, bookingType }: EnhancedDriverCardPr
                 <div className="flex items-center space-x-1">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   <span className="font-medium">{driver.rating}</span>
-                  <span className="text-muted-foreground">({driver.reviewCount} reviews)</span>
+                  <span className="text-muted-foreground">
+                    ({driver.reviewCount} reviews)
+                  </span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Calendar className="h-4 w-4" />
@@ -89,12 +99,18 @@ export function EnhancedDriverCard({ driver, bookingType }: EnhancedDriverCardPr
               </div>
 
               {/* Bio */}
-              <p className="text-sm text-muted-foreground line-clamp-2">{driver.bio}</p>
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {driver.bio}
+              </p>
 
               {/* Preferences */}
               <div className="flex flex-wrap gap-2">
                 {driver.preferences.slice(0, 3).map((preference) => (
-                  <Badge key={preference} variant="secondary" className="text-xs">
+                  <Badge
+                    key={preference}
+                    variant="secondary"
+                    className="text-xs"
+                  >
                     {preference}
                   </Badge>
                 ))}
@@ -112,7 +128,10 @@ export function EnhancedDriverCard({ driver, bookingType }: EnhancedDriverCardPr
                     View Profile
                   </Button>
                 </Link>
-                <Button className="flex-1" onClick={() => setIsBookingModalOpen(true)}>
+                <Button
+                  className="flex-1"
+                  onClick={() => setIsBookingModalOpen(true)}
+                >
                   Book Now
                 </Button>
               </div>
@@ -128,5 +147,5 @@ export function EnhancedDriverCard({ driver, bookingType }: EnhancedDriverCardPr
         defaultBookingType={bookingType}
       />
     </>
-  )
+  );
 }

@@ -55,27 +55,102 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
     >
       <div className="container mx-auto px-4 py-4 space-y-4">
         <nav className="flex flex-col space-y-4">
-          <Link
-            href="/find-driver"
-            className="text-sm font-medium hover:text-primary transition-colors"
-            onClick={onClose}
-          >
-            Find Driver
-          </Link>
-          <Link
-            href="/become-driver"
-            className="text-sm font-medium hover:text-primary transition-colors"
-            onClick={onClose}
-          >
-            Become a Driver
-          </Link>
-          <Link
-            href="/about"
-            className="text-sm font-medium hover:text-primary transition-colors"
-            onClick={onClose}
-          >
-            About
-          </Link>
+          {!session?.user && (
+            <>
+              <Link
+                href="/find-driver"
+                className="text-sm font-medium hover:text-primary transition-colors"
+                onClick={onClose}
+              >
+                Find Driver
+              </Link>
+              <Link
+                href="/become-driver"
+                className="text-sm font-medium hover:text-primary transition-colors"
+                onClick={onClose}
+              >
+                Become a Driver
+              </Link>
+              <Link
+                href="/about"
+                className="text-sm font-medium hover:text-primary transition-colors"
+                onClick={onClose}
+              >
+                About
+              </Link>
+            </>
+          )}
+
+          {session?.user?.type === "admin" && (
+            <>
+              <Link
+                href="/admin"
+                className="text-sm font-medium hover:text-primary transition-colors"
+                onClick={onClose}
+              >
+                Admin Dashboard
+              </Link>
+            </>
+          )}
+
+          {session?.user?.type === "owner" && (
+            <>
+              <Link
+                href="/find-driver"
+                className="text-sm font-medium hover:text-primary transition-colors"
+                onClick={onClose}
+              >
+                Find Driver
+              </Link>
+              <Link
+                href="/dashboard"
+                className="text-sm font-medium hover:text-primary transition-colors"
+                onClick={onClose}
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/messeges"
+                className="text-sm font-medium hover:text-primary transition-colors"
+                onClick={onClose}
+              >
+                Messeges
+              </Link>
+              <Link
+                href="/help"
+                className="text-sm font-medium hover:text-primary transition-colors"
+                onClick={onClose}
+              >
+                Get Help
+              </Link>
+            </>
+          )}
+
+          {session?.user?.type === "driver" && (
+            <>
+              <Link
+                href="/driver-dashboard"
+                className="text-sm font-medium hover:text-primary transition-colors"
+                onClick={onClose}
+              >
+                Driver Dashboard
+              </Link>
+              <Link
+                href="/messeges"
+                className="text-sm font-medium hover:text-primary transition-colors"
+                onClick={onClose}
+              >
+                Messeges
+              </Link>
+              <Link
+                href="/help"
+                className="text-sm font-medium hover:text-primary transition-colors"
+                onClick={onClose}
+              >
+                Get Help
+              </Link>
+            </>
+          )}
         </nav>
 
         <div className="pt-4 border-t">

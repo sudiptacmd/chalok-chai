@@ -1,84 +1,112 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { MapPin, Calendar, DollarSign, Clock, Check, X, Inbox } from "lucide-react"
+import { useEffect, useMemo, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  MapPin,
+  Calendar,
+  DollarSign,
+  Clock,
+  Check,
+  X,
+  Inbox,
+} from "lucide-react";
+import { toast } from "sonner";
 
-// Mock hire requests data
-const mockRequests = [
-  {
-    id: "1",
-    clientName: "Sarah Ahmed",
-    bookingType: "daily",
-    startDate: "2024-01-20",
-    endDate: "2024-01-22",
-    numberOfDays: 3,
-    pickupLocation: "Dhanmondi, Dhaka",
-    totalCost: 4500,
-    status: "pending",
-    requestTime: "2024-01-15T10:30:00Z",
-    notes: "Need pickup at 8 AM sharp. Going to office daily.",
-  },
-  {
-    id: "2",
-    clientName: "Karim Hassan",
-    bookingType: "monthly",
-    startDate: "2024-02-01",
-    endDate: "2024-02-29",
-    pickupLocation: "Gulshan, Dhaka",
-    totalCost: 35000,
-    status: "pending",
-    requestTime: "2024-01-14T15:45:00Z",
-    notes: "Monthly arrangement for office commute. Flexible timing.",
-  },
-  {
-    id: "3",
-    clientName: "Fatima Khan",
-    bookingType: "daily",
-    startDate: "2024-01-18",
-    endDate: "2024-01-18",
-    numberOfDays: 1,
-    pickupLocation: "Uttara, Dhaka",
-    totalCost: 1500,
-    status: "accepted",
-    requestTime: "2024-01-13T09:15:00Z",
-    notes: "Airport pickup required.",
-  },
-]
+type Booking = {
+  _id: string;
+  bookingType: "daily" | "monthly";
+  startDate?: string;
+  endDate?: string;
+  selectedDates?: string[];
+  pickupLocation: string;
+  totalCost: number;
+  status: "pending" | "accepted" | "rejected" | "cancelled" | "completed";
+  ownerUserId?: { name?: string };
+  createdAt?: string;
+  notes?: string;
+};
 
 export function HireRequests() {
-  const [requests, setRequests] = useState(mockRequests)
+  const [requests, setRequests] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleAccept = (requestId: string) => {
-    setRequests(requests.map((req) => (req.id === requestId ? { ...req, status: "accepted" } : req)))
-  }
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/bookings?status=pending");
+      if (!res.ok) throw new Error("Failed to load requests");
+      const json = await res.json();
+      setRequests(json.bookings || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleReject = (requestId: string) => {
-    setRequests(requests.map((req) => (req.id === requestId ? { ...req, status: "rejected" } : req)))
-  }
+  useEffect(() => {
+    load();
+  }, []);
+
+  const handleAction = async (
+    bookingId: string,
+    action: "accept" | "reject"
+  ) => {
+    try {
+      const res = await fetch("/api/bookings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, action }),
+      });
+      if (!res.ok) throw new Error("Failed to update request");
+      setRequests((prev) =>
+        prev.map((r) =>
+          r._id === bookingId
+            ? { ...r, status: action === "accept" ? "accepted" : "rejected" }
+            : r
+        )
+      );
+      toast.success(
+        action === "accept" ? "Request accepted" : "Request rejected"
+      );
+      // Notify other components (e.g., availability calendar) to refresh
+      if (typeof window !== "undefined" && action === "accept") {
+        window.dispatchEvent(new CustomEvent("driver:availabilityUpdated"));
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to update request");
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-500/20 text-yellow-700"
+        return "bg-yellow-500/20 text-yellow-700";
       case "accepted":
-        return "bg-green-500/20 text-green-700"
+        return "bg-green-500/20 text-green-700";
       case "rejected":
-        return "bg-red-500/20 text-red-700"
+        return "bg-red-500/20 text-red-700";
       default:
-        return "bg-gray-500/20 text-gray-700"
+        return "bg-gray-500/20 text-gray-700";
     }
-  }
+  };
 
-  const pendingRequests = requests.filter((req) => req.status === "pending")
-  const otherRequests = requests.filter((req) => req.status !== "pending")
+  const pendingRequests = useMemo(
+    () => requests.filter((r) => r.status === "pending"),
+    [requests]
+  );
+  const otherRequests = useMemo(
+    () => requests.filter((r) => r.status !== "pending"),
+    [requests]
+  );
 
   return (
     <div className="space-y-6">
-      {/* Pending Requests */}
       {pendingRequests.length > 0 && (
         <Card>
           <CardHeader>
@@ -90,26 +118,34 @@ export function HireRequests() {
           <CardContent>
             <div className="space-y-4">
               {pendingRequests.map((request) => (
-                <div key={request.id} className="border rounded-lg p-4 space-y-4">
+                <div
+                  key={request._id}
+                  className="border rounded-lg p-4 space-y-4"
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <Avatar>
                         <AvatarFallback>
-                          {request.clientName
-                            .split(" ")
+                          {request.ownerUserId?.name
+                            ?.split(" ")
                             .map((n) => n[0])
-                            .join("")}
+                            .join("") || "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-semibold">{request.clientName}</h3>
+                        <h3 className="font-semibold">
+                          {request.ownerUserId?.name || "Client"}
+                        </h3>
                         <p className="text-sm text-muted-foreground">
-                          {new Date(request.requestTime).toLocaleString()}
+                          {request.createdAt
+                            ? new Date(request.createdAt).toLocaleString()
+                            : ""}
                         </p>
                       </div>
                     </div>
                     <Badge className={getStatusColor(request.status)}>
-                      {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                      {request.status.charAt(0).toUpperCase() +
+                        request.status.slice(1)}
                     </Badge>
                   </div>
 
@@ -117,12 +153,23 @@ export function HireRequests() {
                     <div className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <div className="font-medium capitalize">{request.bookingType}</div>
+                        <div className="font-medium capitalize">
+                          {request.bookingType}
+                        </div>
                         <div className="text-muted-foreground">
-                          {new Date(request.startDate).toLocaleDateString()}
-                          {request.bookingType === "daily" &&
-                            request.numberOfDays > 1 &&
-                            ` - ${new Date(request.endDate).toLocaleDateString()}`}
+                          {request.bookingType === "daily"
+                            ? `${request.selectedDates?.length || 0} day(s)`
+                            : request.startDate
+                            ? `${new Date(
+                                request.startDate
+                              ).toLocaleDateString()} - ${
+                                request.endDate
+                                  ? new Date(
+                                      request.endDate
+                                    ).toLocaleDateString()
+                                  : ""
+                              }`
+                            : ""}
                         </div>
                       </div>
                     </div>
@@ -131,22 +178,47 @@ export function HireRequests() {
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <div className="font-medium">Pickup</div>
-                        <div className="text-muted-foreground">{request.pickupLocation}</div>
+                        <div className="text-muted-foreground">
+                          {request.pickupLocation}
+                        </div>
                       </div>
                     </div>
 
                     <div className="flex items-center space-x-2">
                       <DollarSign className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <div className="font-medium">৳{request.totalCost.toLocaleString()}</div>
+                        <div className="font-medium">
+                          ৳{request.totalCost.toLocaleString()}
+                        </div>
                         <div className="text-muted-foreground">
                           {request.bookingType === "daily"
-                            ? `${request.numberOfDays} day${request.numberOfDays > 1 ? "s" : ""}`
+                            ? "Daily"
                             : "Monthly"}
                         </div>
                       </div>
                     </div>
                   </div>
+
+                  {/* Show selected dates for daily requests */}
+                  {request.bookingType === "daily" &&
+                    request.selectedDates &&
+                    request.selectedDates.length > 0 && (
+                      <div className="bg-muted/30 p-3 rounded-lg">
+                        <p className="text-sm font-medium mb-2">
+                          Requested Dates
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {request.selectedDates.map((d) => (
+                            <span
+                              key={d}
+                              className="text-xs bg-primary/20 text-primary px-2 py-1 rounded"
+                            >
+                              {new Date(d).toLocaleDateString()}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                   {request.notes && (
                     <div className="bg-muted/30 p-3 rounded-lg">
@@ -160,12 +232,15 @@ export function HireRequests() {
                     <Button
                       variant="outline"
                       className="flex-1 bg-transparent text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-                      onClick={() => handleReject(request.id)}
+                      onClick={() => handleAction(request._id, "reject")}
                     >
                       <X className="h-4 w-4 mr-2" />
                       Reject
                     </Button>
-                    <Button className="flex-1" onClick={() => handleAccept(request.id)}>
+                    <Button
+                      className="flex-1"
+                      onClick={() => handleAction(request._id, "accept")}
+                    >
                       <Check className="h-4 w-4 mr-2" />
                       Accept
                     </Button>
@@ -177,7 +252,6 @@ export function HireRequests() {
         </Card>
       )}
 
-      {/* Other Requests */}
       {otherRequests.length > 0 && (
         <Card>
           <CardHeader>
@@ -186,41 +260,55 @@ export function HireRequests() {
           <CardContent>
             <div className="space-y-4">
               {otherRequests.map((request) => (
-                <div key={request.id} className="border rounded-lg p-4 space-y-3">
+                <div
+                  key={request._id}
+                  className="border rounded-lg p-4 space-y-3"
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <Avatar>
                         <AvatarFallback>
-                          {request.clientName
-                            .split(" ")
+                          {request.ownerUserId?.name
+                            ?.split(" ")
                             .map((n) => n[0])
-                            .join("")}
+                            .join("") || "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-semibold">{request.clientName}</h3>
+                        <h3 className="font-semibold">
+                          {request.ownerUserId?.name || "Client"}
+                        </h3>
                         <p className="text-sm text-muted-foreground">
-                          {new Date(request.requestTime).toLocaleString()}
+                          {request.createdAt
+                            ? new Date(request.createdAt).toLocaleString()
+                            : ""}
                         </p>
                       </div>
                     </div>
                     <Badge className={getStatusColor(request.status)}>
-                      {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                      {request.status.charAt(0).toUpperCase() +
+                        request.status.slice(1)}
                     </Badge>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">Type:</span>
-                      <div className="font-medium capitalize">{request.bookingType}</div>
+                      <div className="font-medium capitalize">
+                        {request.bookingType}
+                      </div>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Location:</span>
-                      <div className="font-medium">{request.pickupLocation}</div>
+                      <div className="font-medium">
+                        {request.pickupLocation}
+                      </div>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Amount:</span>
-                      <div className="font-medium">৳{request.totalCost.toLocaleString()}</div>
+                      <div className="font-medium">
+                        ৳{request.totalCost.toLocaleString()}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -230,7 +318,7 @@ export function HireRequests() {
         </Card>
       )}
 
-      {requests.length === 0 && (
+      {requests.length === 0 && !loading && (
         <Card>
           <CardContent className="text-center py-12">
             <Inbox className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -239,5 +327,5 @@ export function HireRequests() {
         </Card>
       )}
     </div>
-  )
+  );
 }

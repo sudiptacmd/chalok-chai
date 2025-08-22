@@ -232,3 +232,96 @@ export async function sendDriverApprovalEmail(
     };
   }
 }
+
+// Booking Emails
+export async function sendBookingRequestEmail(
+  driverEmail: string,
+  driverName: string,
+  payload: {
+    ownerName: string;
+    bookingType: "daily" | "monthly";
+    selectedDates?: string[];
+    startDate?: string;
+    numberOfMonths?: number;
+    pickupLocation: string;
+    notes?: string;
+    totalCost: number;
+  }
+) {
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: driverEmail,
+    subject: `New Booking Request from ${payload.ownerName}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+        <h2>New Booking Request</h2>
+        <p>Hello ${driverName},</p>
+        <p>You have a new ${payload.bookingType} booking request from <strong>${
+      payload.ownerName
+    }</strong>.</p>
+        <ul>
+          <li><strong>Pickup:</strong> ${payload.pickupLocation}</li>
+          <li><strong>Total:</strong> ৳${payload.totalCost.toLocaleString()}</li>
+          ${
+            payload.bookingType === "daily" && payload.selectedDates?.length
+              ? `<li><strong>Dates:</strong> ${payload.selectedDates.join(
+                  ", "
+                )}</li>`
+              : ""
+          }
+          ${
+            payload.bookingType === "monthly" && payload.startDate
+              ? `<li><strong>Start:</strong> ${payload.startDate} (${
+                  payload.numberOfMonths
+                } month${(payload.numberOfMonths || 0) > 1 ? "s" : ""})</li>`
+              : ""
+          }
+          ${
+            payload.notes
+              ? `<li><strong>Notes:</strong> ${payload.notes}</li>`
+              : ""
+          }
+        </ul>
+        <p>Please visit your driver dashboard to accept or reject this request.</p>
+      </div>
+    `,
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    console.error("Booking request email failed:", error);
+    return { success: false };
+  }
+}
+
+export async function sendBookingDecisionEmail(
+  ownerEmail: string,
+  ownerName: string,
+  accepted: boolean
+) {
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: ownerEmail,
+    subject: accepted
+      ? "Your Booking was Accepted"
+      : "Your Booking was Rejected",
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+        <h2>Booking ${accepted ? "Accepted" : "Rejected"}</h2>
+        <p>Hello ${ownerName},</p>
+        <p>Your booking request has been ${
+          accepted ? "accepted" : "rejected"
+        } by the driver.</p>
+        <p>You can view the status in your dashboard.</p>
+      </div>
+    `,
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    console.error("Booking decision email failed:", error);
+    return { success: false };
+  }
+}
