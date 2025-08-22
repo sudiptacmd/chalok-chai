@@ -6,15 +6,20 @@ import { DriverReviewsTab } from "@/components/driver-reviews-tab"
 import { DriverInfo } from "@/components/driver-info"
 import { DriverNotifications } from "@/components/driver-notifications"
 import { DriverAvailability } from "@/components/driver-availability"
-import { Inbox, Star, User, Bell, Calendar } from "lucide-react"
+import { Inbox, Star, User, Bell, Calendar, ClipboardList } from "lucide-react"
+import { DriverBookings } from "@/components/driver-bookings"
 
 export function DriverDashboardTabs() {
   return (
     <Tabs defaultValue="requests" className="w-full">
-      <TabsList className="grid w-full grid-cols-5">
+      <TabsList className="grid w-full grid-cols-6">
         <TabsTrigger value="requests" className="flex items-center space-x-1">
           <Inbox className="h-4 w-4" />
           <span className="hidden sm:inline">Requests</span>
+        </TabsTrigger>
+        <TabsTrigger value="bookings" className="flex items-center space-x-1">
+          <ClipboardList className="h-4 w-4" />
+          <span className="hidden sm:inline">Bookings</span>
         </TabsTrigger>
         <TabsTrigger value="reviews" className="flex items-center space-x-1">
           <Star className="h-4 w-4" />
@@ -40,6 +45,10 @@ export function DriverDashboardTabs() {
 
       <TabsContent value="reviews" className="mt-6">
         <DriverReviewsTab />
+      </TabsContent>
+
+      <TabsContent value="bookings" className="mt-6">
+        <DriverBookings />
       </TabsContent>
 
       <TabsContent value="profile" className="mt-6">
