@@ -157,6 +157,8 @@ const DriverSchema = new Schema({
   experience: { type: String, default: null },
   pricePerDay: { type: Number, default: null },
   pricePerMonth: { type: Number, default: null },
+  // Approval status (admin controlled)
+  approved: { type: Boolean, default: false },
   // Other fields
 
   ratings: [RatingSchema],
