@@ -148,7 +148,12 @@ const DriverSchema = new Schema({
   phone: { type: String, default: null, required: true },
   dateOfBirth: { type: Date, default: null, required: true },
   nationalId: { type: String, default: null, required: true, unique: true },
-  drivingLicenseNumber: { type: String, default: null, required: true, unique: true },
+  drivingLicenseNumber: {
+    type: String,
+    default: null,
+    required: true,
+    unique: true,
+  },
   drivingLicensePhoto: { type: String, default: null },
   location: { type: String, default: null, required: true },
   bio: { type: String, default: null },
@@ -169,7 +174,7 @@ const DriverSchema = new Schema({
     {
       date: { type: String, required: true }, // YYYY-MM-DD
       status: { type: String, enum: ["unavailable", "booked"], required: true },
-    }
+    },
   ],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
@@ -219,7 +224,6 @@ DriverSchema.methods.calculateAverageRating = function () {
   }
 
   const sum = this.ratings.reduce(
-
     (acc: number, rating: { score: number }) => acc + rating.score,
 
     0
@@ -232,3 +236,38 @@ DriverSchema.methods.calculateAverageRating = function () {
 export const User = models.User || model("User", UserSchema);
 export const Owner = models.Owner || model("Owner", OwnerSchema);
 export const Driver = models.Driver || model("Driver", DriverSchema);
+
+// Booking Schema (separate collection)
+const BookingSchema = new Schema({
+  driverId: { type: Schema.Types.ObjectId, ref: "Driver", required: true },
+  ownerUserId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  bookingType: { type: String, enum: ["daily", "monthly"], required: true },
+  // Daily booking
+  selectedDates: { type: [String], default: [] }, // array of YYYY-MM-DD
+  // Monthly booking
+  startDate: { type: Date, default: null },
+  endDate: { type: Date, default: null },
+  numberOfMonths: { type: Number, default: 0 },
+  pickupLocation: { type: String, required: true },
+  notes: { type: String, default: "" },
+  totalCost: { type: Number, required: true },
+  status: {
+    type: String,
+    enum: ["pending", "accepted", "rejected", "cancelled", "completed"],
+    default: "pending",
+  },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+});
+
+BookingSchema.pre("save", function (next) {
+  this.updatedAt = new Date();
+  next();
+});
+
+// Helpful indexes for querying dashboards
+BookingSchema.index({ ownerUserId: 1, createdAt: -1 });
+BookingSchema.index({ driverId: 1, status: 1, createdAt: -1 });
+BookingSchema.index({ status: 1, createdAt: -1 });
+
+export const Booking = models.Booking || model("Booking", BookingSchema);

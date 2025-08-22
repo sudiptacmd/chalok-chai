@@ -124,8 +124,11 @@ export async function GET(req: NextRequest) {
       bio: d.bio || "",
       availability: (d.availability || []).reduce<Record<string, string>>(
         (acc, slot) => {
-          const date = new Date(slot.date).toISOString().split("T")[0];
-          acc[date] = slot.status;
+          const dateStr =
+            typeof slot.date === "string"
+              ? slot.date
+              : new Date(slot.date).toISOString().split("T")[0];
+          acc[dateStr] = slot.status;
           return acc;
         },
         {}
