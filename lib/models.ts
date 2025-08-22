@@ -141,6 +141,7 @@ const DriverSchema = new Schema({
     required: true,
     unique: true,
   },
+
   // Profile fields
   name: { type: String, default: null },
   email: { type: String, default: null, required: true },
@@ -157,7 +158,7 @@ const DriverSchema = new Schema({
   pricePerDay: { type: Number, default: null },
   pricePerMonth: { type: Number, default: null },
   // Other fields
-  approved: { type: Boolean, default: false },
+
   ratings: [RatingSchema],
   averageRating: { type: Number, default: 0 },
   totalRides: { type: Number, default: 0 },
@@ -216,7 +217,9 @@ DriverSchema.methods.calculateAverageRating = function () {
   }
 
   const sum = this.ratings.reduce(
+
     (acc: number, rating: { score: number }) => acc + rating.score,
+
     0
   );
   this.averageRating = Math.round((sum / this.ratings.length) * 10) / 10;
