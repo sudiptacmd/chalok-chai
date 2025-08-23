@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin } from "lucide-react";
+import { MapPin, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 type Booking = {
   _id: string;
@@ -35,6 +37,7 @@ const getStatusColor = (status: string) => {
 export function BookingHistory() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -121,6 +124,32 @@ export function BookingHistory() {
                       ৳{booking.totalCost.toLocaleString()}
                     </div>
                   </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-transparent"
+                    disabled={booking.status !== "accepted"}
+                    onClick={async () => {
+                      try {
+                        // Ensure/create conversation with driver user
+                        const driverRes = await fetch(`/api/drivers/${(booking as any).driverId?._id || ""}`);
+                        if (!driverRes.ok) return;
+                        const d = await driverRes.json();
+                        const otherUserId = d.userId;
+                        if (!otherUserId) return;
+                        const cr = await fetch('/api/messages/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ otherUserId })});
+                        if (!cr.ok) return;
+                        const { conversationId } = await cr.json();
+                        router.push(`/messages/${conversationId}`);
+                      } catch {}
+                    }}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Message
+                  </Button>
                 </div>
               </div>
             ))}

@@ -47,10 +47,10 @@ export function Header() {
             Dashboard
           </Link>
           <Link
-            href="/messeges"
+            href="/messages"
             className="text-sm font-medium hover:text-primary transition-colors"
           >
-            Messeges
+            Messages
           </Link>
           <Link
             href="/help"
@@ -71,10 +71,10 @@ export function Header() {
             Driver Dashboard
           </Link>
           <Link
-            href="/messeges"
+            href="/messages"
             className="text-sm font-medium hover:text-primary transition-colors"
           >
-            Messeges
+            Messages
           </Link>
           <Link
             href="/help"

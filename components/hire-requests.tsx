@@ -15,6 +15,8 @@ import {
   Inbox,
 } from "lucide-react";
 import { toast } from "sonner";
+import { MessageCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type Booking = {
   _id: string;
@@ -33,6 +35,7 @@ type Booking = {
 export function HireRequests() {
   const [requests, setRequests] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const load = async () => {
     setLoading(true);
@@ -311,6 +314,31 @@ export function HireRequests() {
                         ৳{request.totalCost.toLocaleString()}
                       </div>
                     </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-transparent"
+                      disabled={request.status !== "accepted"}
+                      onClick={async () => {
+                        try {
+                          // Start a conversation with the owner
+                          const res = await fetch('/api/messages/conversations', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ otherUserId: (request as any).ownerUserId?._id })
+                          });
+                          if (!res.ok) return;
+                          const { conversationId } = await res.json();
+                          router.push(`/messages/${conversationId}`);
+                        } catch {}
+                      }}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Message
+                    </Button>
                   </div>
                 </div>
               ))}
