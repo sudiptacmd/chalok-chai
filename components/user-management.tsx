@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Ban, UserCheck, Users, Car, Star, MapPin, Loader2, RefreshCw } from "lucide-react"
+import { Search, Ban, UserCheck, Users, Car, Star, MapPin, Loader2 } from "lucide-react"
 
 interface User {
   _id: string
@@ -218,19 +218,7 @@ export function UserManagement() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>User Management</CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchUsers}
-              disabled={loading}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-          </div>
+          <CardTitle>User Management</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4">

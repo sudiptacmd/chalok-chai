@@ -41,7 +41,7 @@ export const DisputeManagement: React.FC = () => {
   useEffect(() => { load(); }, [statusFilter]);
 
   const active = useMemo(() => tickets.find(t => t._id === activeId) ?? null, [tickets, activeId]);
-
+//reply
   const sendReply = async () => {
     if (!activeId || !reply.trim()) return;
     setLoading(true);
@@ -74,10 +74,11 @@ export const DisputeManagement: React.FC = () => {
   };
 
   const onComposerKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-      e.preventDefault(); sendReply();
-    }
-  };
+  if (e.key === "Enter") {
+    e.preventDefault(); 
+    sendReply();
+  }
+};
 
   const badgeFor = (status: Ticket["status"]) => {
     const map: Record<Ticket["status"], string> = {

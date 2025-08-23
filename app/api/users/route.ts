@@ -52,9 +52,6 @@ export async function GET(request: NextRequest) {
               suspended: user.suspended || false,
               status: user.suspended ? "inactive" : (driver.approved ? "active" : "pending"),
             };
-          } else {
-            // If no driver record exists, exclude this user from the list
-            return null;
           }
         } else if (user.type === "owner") {
           const owner = await Owner.findOne({ userId: user._id });
@@ -65,9 +62,6 @@ export async function GET(request: NextRequest) {
               suspended: user.suspended || false,
               status: user.suspended ? "inactive" : (user.emailVerified ? "active" : "inactive"),
             };
-          } else {
-            // If no owner record exists, exclude this user from the list
-            return null;
           }
         }
 
