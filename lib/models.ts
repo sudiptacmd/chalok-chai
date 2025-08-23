@@ -63,10 +63,6 @@ const UserSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  suspended: {
-    type: Boolean,
-    default: false,
-  },
   emailVerificationToken: {
     type: String,
     default: null,
@@ -146,19 +142,13 @@ const DriverSchema = new Schema({
     required: true,
     unique: true,
   },
-
   // Profile fields
   name: { type: String, default: null },
   email: { type: String, default: null, required: true },
   phone: { type: String, default: null, required: true },
   dateOfBirth: { type: Date, default: null, required: true },
   nationalId: { type: String, default: null, required: true, unique: true },
-  drivingLicenseNumber: {
-    type: String,
-    default: null,
-    required: true,
-    unique: true,
-  },
+  drivingLicenseNumber: { type: String, default: null, required: true, unique: true },
   drivingLicensePhoto: { type: String, default: null },
   location: { type: String, default: null, required: true },
   bio: { type: String, default: null },
@@ -167,10 +157,8 @@ const DriverSchema = new Schema({
   experience: { type: String, default: null },
   pricePerDay: { type: Number, default: null },
   pricePerMonth: { type: Number, default: null },
-  // Approval status (admin controlled)
-  approved: { type: Boolean, default: false },
   // Other fields
-
+  approved: { type: Boolean, default: false },
   ratings: [RatingSchema],
   averageRating: { type: Number, default: 0 },
   totalRides: { type: Number, default: 0 },
@@ -179,7 +167,7 @@ const DriverSchema = new Schema({
     {
       date: { type: String, required: true }, // YYYY-MM-DD
       status: { type: String, enum: ["unavailable", "booked"], required: true },
-    },
+    }
   ],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
@@ -229,8 +217,7 @@ DriverSchema.methods.calculateAverageRating = function () {
   }
 
   const sum = this.ratings.reduce(
-    (acc: number, rating: { score: number }) => acc + rating.score,
-
+  (acc: number, rating: { score: number }) => acc + rating.score,
     0
   );
   this.averageRating = Math.round((sum / this.ratings.length) * 10) / 10;
@@ -242,17 +229,74 @@ export const User = models.User || model("User", UserSchema);
 export const Owner = models.Owner || model("Owner", OwnerSchema);
 export const Driver = models.Driver || model("Driver", DriverSchema);
 
-// Booking Schema (separate collection)
+// Conversation Schema
+const ConversationSchema = new Schema({
+  participants: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  ],
+  lastMessage: { type: String, default: "" },
+  latestMessageAt: { type: Date, default: Date.now },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+});
+
+ConversationSchema.index({ participants: 1 });
+ConversationSchema.index({ latestMessageAt: -1 });
+ConversationSchema.pre("save", function (next) {
+  this.updatedAt = new Date();
+  next();
+});
+
+// Ensure exactly two unique participants
+ConversationSchema.pre("validate", function (next) {
+  if (!Array.isArray(this.participants) || this.participants.length !== 2) {
+    return next(new Error("Conversation must have exactly two participants"));
+  }
+  const [a, b] = this.participants.map((p: { toString(): string } | string | null | undefined) =>
+    p ? p.toString() : ""
+  );
+  if (a === b) {
+    return next(new Error("Conversation participants must be different users"));
+  }
+  next();
+});
+
+// Message Schema
+const MessageSchema = new Schema({
+  conversationId: {
+    type: Schema.Types.ObjectId,
+    ref: "Conversation",
+    required: true,
+  },
+  senderId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  recipientId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  body: { type: String, required: true, trim: true },
+  createdAt: { type: Date, default: Date.now },
+  readAt: { type: Date, default: null },
+});
+
+MessageSchema.index({ conversationId: 1, createdAt: 1 });
+
+export const Conversation =
+  models.Conversation || model("Conversation", ConversationSchema);
+export const Message = models.Message || model("Message", MessageSchema);
+
+// Booking Schema (separate collection for bookings)
 const BookingSchema = new Schema({
   driverId: { type: Schema.Types.ObjectId, ref: "Driver", required: true },
   ownerUserId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   bookingType: { type: String, enum: ["daily", "monthly"], required: true },
-  // Daily booking
+  // Daily booking fields
   selectedDates: { type: [String], default: [] }, // array of YYYY-MM-DD
-  // Monthly booking
+  // Monthly booking fields
   startDate: { type: Date, default: null },
   endDate: { type: Date, default: null },
   numberOfMonths: { type: Number, default: 0 },
+  // Common fields
   pickupLocation: { type: String, required: true },
   notes: { type: String, default: "" },
   totalCost: { type: Number, required: true },
@@ -271,12 +315,13 @@ const BookingSchema = new Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
+// Maintain updatedAt
 BookingSchema.pre("save", function (next) {
   this.updatedAt = new Date();
   next();
 });
 
-// Helpful indexes for querying dashboards
+// Helpful indexes for queries
 BookingSchema.index({ ownerUserId: 1, createdAt: -1 });
 BookingSchema.index({ driverId: 1, status: 1, createdAt: -1 });
 BookingSchema.index({ status: 1, createdAt: -1 });

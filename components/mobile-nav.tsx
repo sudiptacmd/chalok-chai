@@ -110,11 +110,11 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 Dashboard
               </Link>
               <Link
-                href="/messeges"
+                href="/messages"
                 className="text-sm font-medium hover:text-primary transition-colors"
                 onClick={onClose}
               >
-                Messeges
+                Messages
               </Link>
               <Link
                 href="/help"
@@ -136,11 +136,11 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 Driver Dashboard
               </Link>
               <Link
-                href="/messeges"
+                href="/messages"
                 className="text-sm font-medium hover:text-primary transition-colors"
                 onClick={onClose}
               >
-                Messeges
+                Messages
               </Link>
               <Link
                 href="/help"

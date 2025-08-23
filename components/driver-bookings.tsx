@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, MapPin, DollarSign, Inbox } from "lucide-react";
+
+import { useEffect, useMemo, useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Calendar, MapPin, DollarSign, Inbox, MessageCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
+
 
 type Booking = {
   _id: string;
@@ -34,8 +38,11 @@ const getStatusColor = (status: string) => {
 };
 
 export function DriverBookings() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(false);
+
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+
 
   const load = async () => {
     setLoading(true);
@@ -180,6 +187,30 @@ export function DriverBookings() {
                     </p>
                   </div>
                 )}
+
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-transparent"
+                    disabled={b.status !== "accepted"}
+                    onClick={async () => {
+                      try {
+                        // Ensure/create conversation with owner
+                        // Fetch current user's conversations requires owner user id
+                        const ownerUserId = (b as any).ownerUserId?._id || (b as any).ownerUserId?.toString?.()
+                        if (!ownerUserId) return
+                        const cr = await fetch('/api/messages/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ otherUserId: ownerUserId })})
+                        if (!cr.ok) return
+                        const { conversationId } = await cr.json()
+                        router.push(`/messages/${conversationId}`)
+                      } catch {}
+                    }}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Message
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

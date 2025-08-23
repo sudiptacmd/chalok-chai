@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Star, MapPin, Shield, Calendar, Flag, MessageCircle } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useCallback } from "react"
 
 interface Driver {
   id: string
@@ -31,6 +33,26 @@ interface DriverProfileHeaderProps {
 }
 
 export function DriverProfileHeader({ driver, onBookNow, onReport }: DriverProfileHeaderProps) {
+  const router = useRouter()
+  const onMessage = useCallback(async () => {
+    // Ensure or create a conversation with this driver
+    try {
+      // We need the driver user id; the driver.id is driver document id.
+      // The conversation creation accepts otherUserId as driver.userId via API lookup is not here, so
+      // we'll call a helper route under /api/drivers/[id] to resolve userId is not available.
+      // As a pragmatic approach, the server will accept driverId via body.otherUserId if it's a user id.
+      // Here we fetch driver detail again to get populated user id.
+      const res = await fetch(`/api/drivers/${driver.id}`)
+      if (!res.ok) return
+  const d = await res.json()
+  const otherUserId = d.userId
+      if (!otherUserId) return
+      const cr = await fetch('/api/messages/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ otherUserId })})
+      if (!cr.ok) return
+      const { conversationId } = await cr.json()
+      router.push(`/messages/${conversationId}`)
+    } catch {}
+  }, [driver.id, router])
   return (
     <Card className="mb-8">
       <CardContent className="p-6">
@@ -117,7 +139,7 @@ export function DriverProfileHeader({ driver, onBookNow, onReport }: DriverProfi
               <Calendar className="h-4 w-4 mr-2" />
               Book Now
             </Button>
-            <Button variant="outline" size="lg" className="w-full bg-transparent">
+            <Button variant="outline" size="lg" className="w-full bg-transparent" onClick={onMessage}>
               <MessageCircle className="h-4 w-4 mr-2" />
               Message
             </Button>
