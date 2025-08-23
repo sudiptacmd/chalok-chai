@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      // Normalize and validate selected dates
+      // validate
       const unique = Array.from(
         new Set<string>(selectedDates.map((d: string) => String(d)))
       );
@@ -60,14 +60,14 @@ export async function POST(req: NextRequest) {
         today.getMonth(),
         today.getDate()
       );
-      // Build a quick lookup for driver's blocked dates
+      // driver's blocked dates
       const blocked = new Set<string>();
       for (const a of driver.availability || []) {
         if (a.status === "booked" || a.status === "unavailable")
           blocked.add(a.date);
       }
+      // date validation error, fixed by gpt
       for (const ds of unique) {
-        // basic YYYY-MM-DD check
         if (!/^\d{4}-\d{2}-\d{2}$/.test(ds)) {
           return NextResponse.json(
             { error: `Invalid date format: ${ds}` },
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
       status: "pending",
     });
 
-    // Email driver about new request
+    // Email
     try {
       const driverUser = await User.findById(driver.userId);
       if (driverUser?.email) {
@@ -240,7 +240,7 @@ export async function PATCH(req: NextRequest) {
     booking.status = action === "accept" ? "accepted" : "rejected";
     await booking.save();
 
-    // Update availability for accepted daily bookings: mark selected dates as booked
+    // Update availability (booked)
     if (
       booking.status === "accepted" &&
       booking.bookingType === "daily" &&
@@ -264,7 +264,7 @@ export async function PATCH(req: NextRequest) {
       await driver.save();
     }
 
-    // Notify owner via email
+    // email
     try {
       const ownerUser = await User.findById(booking.ownerUserId);
       if (ownerUser?.email) {

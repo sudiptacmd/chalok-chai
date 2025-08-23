@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { HireRequests } from "@/components/hire-requests"
-import { DriverReviewsTab } from "@/components/driver-reviews-tab"
-import { DriverInfo } from "@/components/driver-info"
-import { DriverNotifications } from "@/components/driver-notifications"
-import { DriverAvailability } from "@/components/driver-availability"
-import { Inbox, Star, User, Bell, Calendar, ClipboardList } from "lucide-react"
-import { DriverBookings } from "@/components/driver-bookings"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { HireRequests } from "@/components/hire-requests";
+import { DriverReviewsTab } from "@/components/driver-reviews-tab";
+import { DriverInfo } from "@/components/driver-info";
+import { DriverNotifications } from "@/components/driver-notifications";
+import { DriverAvailability } from "@/components/driver-availability";
+import { Inbox, Star, User, Bell, Calendar, ClipboardList } from "lucide-react";
+import { DriverBookings } from "@/components/driver-bookings";
 
 export function DriverDashboardTabs() {
   return (
@@ -29,11 +29,17 @@ export function DriverDashboardTabs() {
           <User className="h-4 w-4" />
           <span className="hidden sm:inline">Profile</span>
         </TabsTrigger>
-        <TabsTrigger value="notifications" className="flex items-center space-x-1">
+        <TabsTrigger
+          value="notifications"
+          className="flex items-center space-x-1"
+        >
           <Bell className="h-4 w-4" />
           <span className="hidden sm:inline">Notifications</span>
         </TabsTrigger>
-        <TabsTrigger value="availability" className="flex items-center space-x-1">
+        <TabsTrigger
+          value="availability"
+          className="flex items-center space-x-1"
+        >
           <Calendar className="h-4 w-4" />
           <span className="hidden sm:inline">Availability</span>
         </TabsTrigger>
@@ -63,5 +69,5 @@ export function DriverDashboardTabs() {
         <DriverAvailability />
       </TabsContent>
     </Tabs>
-  )
+  );
 }

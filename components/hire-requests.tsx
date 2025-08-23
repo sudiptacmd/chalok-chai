@@ -75,8 +75,8 @@ export function HireRequests() {
       );
       // Notify other components (e.g., availability calendar, bookings tab) to refresh
       if (typeof window !== "undefined" && action === "accept") {
-        window.dispatchEvent(new CustomEvent("driver:availabilityUpdated"))
-        window.dispatchEvent(new CustomEvent("driver:bookingsUpdated"))
+        window.dispatchEvent(new CustomEvent("driver:availabilityUpdated"));
+        window.dispatchEvent(new CustomEvent("driver:bookingsUpdated"));
       }
     } catch (e) {
       console.error(e);
