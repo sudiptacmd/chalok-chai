@@ -30,6 +30,7 @@ interface DriverApplication {
   createdAt: string
 }
 
+//component
 export function DriverApplications() {
   const [applications, setApplications] = useState<DriverApplication[]>([])
   const [loading, setLoading] = useState(true)

@@ -26,6 +26,7 @@ export const DisputeManagement: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [booting, setBooting] = useState(true);
 
+  //load tickets
   const load = async () => {
     setBooting(true);
     try {
@@ -40,7 +41,7 @@ export const DisputeManagement: React.FC = () => {
 
   useEffect(() => { load(); }, [statusFilter]);
 
-  const active = useMemo(() => tickets.find(t => t._id === activeId) ?? null, [tickets, activeId]);
+  const active = useMemo(() => tickets.find(t => t._id === activeId) ?? null, [tickets, activeId]); //finds active tick based on activeid
 //reply
   const sendReply = async () => {
     if (!activeId || !reply.trim()) return;
@@ -51,6 +52,7 @@ export const DisputeManagement: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ticketId: activeId, message: reply.trim() }),
       });
+      alert("Reply sent successfully");
       const data = await res.json();
       if (res.ok) {
         setTickets(prev => prev.map(t => t._id === activeId ? data.ticket : t));
@@ -59,6 +61,7 @@ export const DisputeManagement: React.FC = () => {
     } finally { setLoading(false); }
   };
 
+  //status
   const updateStatus = async (newStatus: Ticket["status"]) => {
     if (!activeId) return;
     setTickets(prev => prev.map(t => t._id === activeId ? { ...t, status: newStatus } : t));
@@ -112,7 +115,7 @@ export const DisputeManagement: React.FC = () => {
   }, [tickets, q]);
 
   return (
-    <div className="min-h-[calc(100vh-64px)] w-full grid grid-cols-1 
+    <div className=" bg-min-h-[calc(100vh-64px)] w-full grid grid-cols-1
       md:grid-cols-[380px_1fr] lg:grid-cols-[420px_1fr] xl:grid-cols-[460px_1fr] gap-6">
       
       {/* LEFT: Sidebar */}
@@ -128,6 +131,8 @@ export const DisputeManagement: React.FC = () => {
           />
           <Button variant="secondary" className="h-10" onClick={load}>Refresh</Button>
         </div>
+
+        
 
         <div className="mt-3">
           <label className="text-xs font-medium">Filter Status</label>

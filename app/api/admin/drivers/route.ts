@@ -8,7 +8,7 @@ import { sendDriverApprovalEmail } from "@/lib/email";
 // Get pending driver applications (Admin only)
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions); //current user session
 
     if (!session || session.user.type !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
