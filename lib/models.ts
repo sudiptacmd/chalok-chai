@@ -224,6 +224,7 @@ DriverSchema.methods.calculateAverageRating = function () {
   return this.averageRating;
 };
 
+
 // Export models
 export const User = models.User || model("User", UserSchema);
 export const Owner = models.Owner || model("Owner", OwnerSchema);
@@ -326,8 +327,6 @@ BookingSchema.index({ ownerUserId: 1, createdAt: -1 });
 BookingSchema.index({ driverId: 1, status: 1, createdAt: -1 });
 BookingSchema.index({ status: 1, createdAt: -1 });
 
-export const Booking = models.Booking || model("Booking", BookingSchema);
-
 // Support Ticket / Dispute Schema
 const TicketMessageSchema = new Schema({
   senderUserId: { type: Schema.Types.ObjectId, ref: "User", required: true },
@@ -366,4 +365,10 @@ TicketSchema.index({ createdByUserId: 1, lastMessageAt: -1 });
 TicketSchema.index({ againstUserId: 1, lastMessageAt: -1 });
 TicketSchema.index({ status: 1, lastMessageAt: -1 });
 
+// Export all models
+export const User = models.User || model("User", UserSchema);
+export const Owner = models.Owner || model("Owner", OwnerSchema);
+export const Driver = models.Driver || model("Driver", DriverSchema);
+export const Booking = models.Booking || model("Booking", BookingSchema);
 export const Ticket = models.Ticket || model("Ticket", TicketSchema);
+

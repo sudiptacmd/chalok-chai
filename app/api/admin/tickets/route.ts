@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status");
   const filter: any = {};
   if (status) filter.status = status;
-  const tickets = await Ticket.find(filter)
+  const tickets = await Ticket.find(filter) //query
     .populate("createdByUserId", "name email type")
     .populate("againstUserId", "name email type")
     .populate({

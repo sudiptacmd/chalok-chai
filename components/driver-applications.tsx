@@ -50,6 +50,7 @@ const mockApplications = [
   },
 ]
 
+//component
 export function DriverApplications() {
   const [applications, setApplications] = useState(mockApplications)
   const [selectedApplication, setSelectedApplication] = useState<any>(null)
