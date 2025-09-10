@@ -325,11 +325,18 @@ export function HireRequests() {
                       onClick={async () => {
                         try {
                           // Start a conversation with the owner
-                          const res = await fetch('/api/messages/conversations', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ otherUserId: (request as any).ownerUserId?._id })
-                          });
+                          const res = await fetch(
+                            "/api/messages/conversations",
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                otherUserId: (
+                                  request as { ownerUserId?: { _id?: string } }
+                                ).ownerUserId?._id,
+                              }),
+                            }
+                          );
                           if (!res.ok) return;
                           const { conversationId } = await res.json();
                           router.push(`/messages/${conversationId}`);

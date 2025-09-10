@@ -12,9 +12,29 @@ import {
   SelectValue,
 } from "./ui/select";
 
-interface CounterpartUser { _id: string; name?: string; email: string; type: string }
-interface BookingOption { id: string; type: string; status: string; startDate?: string; endDate?: string; selectedDates?: string[]; ownerUserId: string; driverUserId: string }
-interface Props { onCreated?: (ticket: any) => void }
+interface CounterpartUser {
+  _id: string;
+  name?: string;
+  email: string;
+  type: string;
+}
+interface BookingOption {
+  id: string;
+  type: string;
+  status: string;
+  startDate?: string;
+  endDate?: string;
+  selectedDates?: string[];
+  ownerUserId: string;
+  driverUserId: string;
+}
+interface Props {
+  onCreated?: (ticket: {
+    _id: string;
+    subject: string;
+    status: string;
+  }) => void;
+}
 
 const SUBJECT_MAX = 120;
 const MESSAGE_MAX = 1500;
@@ -29,7 +49,9 @@ export const CreateTicketForm: React.FC<Props> = ({ onCreated }) => {
   const [bookings, setBookings] = useState<BookingOption[]>([]);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedBookingId, setSelectedBookingId] = useState("");
-  const [priority, setPriority] = useState<"low"|"medium"|"high"|"urgent">("medium");
+  const [priority, setPriority] = useState<
+    "low" | "medium" | "high" | "urgent"
+  >("medium");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -41,7 +63,9 @@ export const CreateTicketForm: React.FC<Props> = ({ onCreated }) => {
         const data = await res.json();
         setUsers(data.users || []);
         setBookings(data.bookings || []);
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+      }
     };
     load();
   }, []);
@@ -49,7 +73,8 @@ export const CreateTicketForm: React.FC<Props> = ({ onCreated }) => {
   const userFilteredBookings = useMemo(() => {
     if (!selectedUserId) return bookings;
     return bookings.filter(
-      b => b.ownerUserId === selectedUserId || b.driverUserId === selectedUserId
+      (b) =>
+        b.ownerUserId === selectedUserId || b.driverUserId === selectedUserId
     );
   }, [bookings, selectedUserId]);
 
@@ -57,17 +82,23 @@ export const CreateTicketForm: React.FC<Props> = ({ onCreated }) => {
     if (!selectedUserId) return "Please select the user involved.";
     if (!subject.trim()) return "Subject is required.";
     if (!message.trim()) return "Message is required.";
-    if (subject.length > SUBJECT_MAX) return `Subject must be ≤ ${SUBJECT_MAX} chars.`;
-    if (message.length > MESSAGE_MAX) return `Message must be ≤ ${MESSAGE_MAX} chars.`;
+    if (subject.length > SUBJECT_MAX)
+      return `Subject must be ≤ ${SUBJECT_MAX} chars.`;
+    if (message.length > MESSAGE_MAX)
+      return `Message must be ≤ ${MESSAGE_MAX} chars.`;
     return null;
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    setError(null); setSuccess(null);
+    setError(null);
+    setSuccess(null);
 
     const v = validate();
-    if (v) { setError(v); return; }
+    if (v) {
+      setError(v);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -92,8 +123,8 @@ export const CreateTicketForm: React.FC<Props> = ({ onCreated }) => {
       setSelectedBookingId("");
       setPriority("medium");
       onCreated?.(data.ticket);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -116,9 +147,12 @@ export const CreateTicketForm: React.FC<Props> = ({ onCreated }) => {
         "
       >
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight">Help &amp; Support</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Help &amp; Support
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Create a ticket for booking issues, payments, or disputes. Our team will follow up.
+            Create a ticket for booking issues, payments, or disputes. Our team
+            will follow up.
           </p>
         </div>
 
@@ -133,12 +167,20 @@ export const CreateTicketForm: React.FC<Props> = ({ onCreated }) => {
           </div>
         )}
 
-        <form className="space-y-5" onSubmit={handleSubmit} onKeyDown={onKeyDown}>
+        <form
+          className="space-y-5"
+          onSubmit={handleSubmit}
+          onKeyDown={onKeyDown}
+        >
           {/* Subject */}
           <div>
             <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium">Subject<span className="text-red-500"> *</span></label>
-              <span className="text-xs text-muted-foreground">{subject.length}/{SUBJECT_MAX}</span>
+              <label className="block text-sm font-medium">
+                Subject<span className="text-red-500"> *</span>
+              </label>
+              <span className="text-xs text-muted-foreground">
+                {subject.length}/{SUBJECT_MAX}
+              </span>
             </div>
             <Input
               value={subject}
@@ -151,17 +193,24 @@ export const CreateTicketForm: React.FC<Props> = ({ onCreated }) => {
           {/* Row: user + priority */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium">User Involved<span className="text-red-500"> *</span></label>
+              <label className="block text-sm font-medium">
+                User Involved<span className="text-red-500"> *</span>
+              </label>
               <Select
                 value={selectedUserId}
-                onValueChange={(v) => { setSelectedUserId(v); if (selectedBookingId) setSelectedBookingId(""); }}
+                onValueChange={(v) => {
+                  setSelectedUserId(v);
+                  if (selectedBookingId) setSelectedBookingId("");
+                }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select user" />
                 </SelectTrigger>
                 <SelectContent>
                   {users.length === 0 && (
-                    <div className="px-3 py-2 text-sm text-muted-foreground">No users found</div>
+                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                      No users found
+                    </div>
                   )}
                   {users.map((u) => (
                     <SelectItem key={u._id} value={u._id}>
@@ -170,12 +219,19 @@ export const CreateTicketForm: React.FC<Props> = ({ onCreated }) => {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="mt-1 text-xs text-muted-foreground">Pick the customer/driver tied to this issue.</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Pick the customer/driver tied to this issue.
+              </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium">Priority</label>
-              <Select value={priority} onValueChange={(v) => setPriority(v as any)}>
+              <Select
+                value={priority}
+                onValueChange={(v) =>
+                  setPriority(v as "low" | "medium" | "high" | "urgent")
+                }
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
@@ -194,20 +250,31 @@ export const CreateTicketForm: React.FC<Props> = ({ onCreated }) => {
 
           {/* Booking */}
           <div>
-            <label className="block text-sm font-medium">Related Trip (optional)</label>
-            <Select value={selectedBookingId} onValueChange={setSelectedBookingId}>
+            <label className="block text-sm font-medium">
+              Related Trip (optional)
+            </label>
+            <Select
+              value={selectedBookingId}
+              onValueChange={setSelectedBookingId}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Link a specific trip (if any)" />
               </SelectTrigger>
               <SelectContent>
                 {userFilteredBookings.length === 0 && (
-                  <div className="px-3 py-2 text-sm text-muted-foreground">No trips for this user</div>
+                  <div className="px-3 py-2 text-sm text-muted-foreground">
+                    No trips for this user
+                  </div>
                 )}
                 {userFilteredBookings.map((b) => (
                   <SelectItem key={b.id} value={b.id}>
                     {b.type} • {b.status}
-                    {b.selectedDates?.length ? ` • ${b.selectedDates.length} day(s)` : ""}
-                    {b.startDate ? ` • ${new Date(b.startDate).toLocaleDateString()}` : ""}
+                    {b.selectedDates?.length
+                      ? ` • ${b.selectedDates.length} day(s)`
+                      : ""}
+                    {b.startDate
+                      ? ` • ${new Date(b.startDate).toLocaleDateString()}`
+                      : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -217,8 +284,12 @@ export const CreateTicketForm: React.FC<Props> = ({ onCreated }) => {
           {/* Message */}
           <div>
             <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium">Message<span className="text-red-500"> *</span></label>
-              <span className="text-xs text-muted-foreground">{message.length}/{MESSAGE_MAX}</span>
+              <label className="block text-sm font-medium">
+                Message<span className="text-red-500"> *</span>
+              </label>
+              <span className="text-xs text-muted-foreground">
+                {message.length}/{MESSAGE_MAX}
+              </span>
             </div>
             <Textarea
               value={message}
@@ -227,7 +298,11 @@ export const CreateTicketForm: React.FC<Props> = ({ onCreated }) => {
               rows={6}
               placeholder="Explain what happened, expected vs actual, steps, screenshots/IDs…"
             />
-            <p className="mt-1 text-xs text-muted-foreground">Tip: Press <kbd className="px-1 py-0.5 border rounded">Ctrl</kbd>/<kbd className="px-1 py-0.5 border rounded">⌘</kbd> + <kbd className="px-1 py-0.5 border rounded">Enter</kbd> to submit.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Tip: Press <kbd className="px-1 py-0.5 border rounded">Ctrl</kbd>/
+              <kbd className="px-1 py-0.5 border rounded">⌘</kbd> +{" "}
+              <kbd className="px-1 py-0.5 border rounded">Enter</kbd> to submit.
+            </p>
           </div>
 
           {/* Actions */}
@@ -239,10 +314,13 @@ export const CreateTicketForm: React.FC<Props> = ({ onCreated }) => {
               type="button"
               variant="secondary"
               onClick={() => {
-                setSubject(""); setMessage("");
-                setSelectedUserId(""); setSelectedBookingId("");
+                setSubject("");
+                setMessage("");
+                setSelectedUserId("");
+                setSelectedBookingId("");
                 setPriority("medium");
-                setError(null); setSuccess(null);
+                setError(null);
+                setSuccess(null);
               }}
             >
               Clear

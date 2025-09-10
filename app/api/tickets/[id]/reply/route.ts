@@ -6,19 +6,21 @@ import { Ticket } from "@/lib/models";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const { id } = params;
+  const { id } = await params;
   const body = await req.json();
   const { message } = body;
-  if (!message) return NextResponse.json({ error: "Message required" }, { status: 400 });
+  if (!message)
+    return NextResponse.json({ error: "Message required" }, { status: 400 });
   await dbConnect();
   const ticket = await Ticket.findById(id);
-  if (!ticket) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!ticket)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   const userId = session.user.id;
   // authorization: must be creator, against, or admin
   const isParticipant =

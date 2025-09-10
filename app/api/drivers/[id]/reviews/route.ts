@@ -30,13 +30,25 @@ export async function GET(
       return NextResponse.json({ error: "Driver not found" }, { status: 404 });
     }
 
+    interface Rating {
+      _id: string;
+      score: number;
+      description: string;
+      author?: {
+        name: string;
+        email: string;
+      };
+      createdAt: string;
+      bookingId?: string;
+    }
+
     // Sort reviews by creation date (newest first)
-    const sortedReviews = driver.ratings
+    const sortedReviews = (driver.ratings as Rating[])
       .sort(
-        (a: any, b: any) =>
+        (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       )
-      .map((rating: any) => ({
+      .map((rating) => ({
         _id: rating._id,
         score: rating.score,
         description: rating.description,

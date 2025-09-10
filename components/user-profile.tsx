@@ -1,62 +1,68 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Edit, Save, X } from "lucide-react"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Edit, Save, X } from "lucide-react";
 
 export function UserProfile() {
-  const [isEditing, setIsEditing] = useState(false)
-  const [profileData, setProfileData] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [isEditing, setIsEditing] = useState(false);
+  const [profileData, setProfileData] = useState<{
+    name: string;
+    email: string;
+    profilePhoto?: string;
+    phone?: string;
+    address?: string;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchProfile() {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
       try {
-        const res = await fetch("/api/profile")
-        if (!res.ok) throw new Error("Failed to fetch profile")
-        const { profile } = await res.json()
-        setProfileData(profile)
-      } catch (err: any) {
-        setError(err.message)
+        const res = await fetch("/api/profile");
+        if (!res.ok) throw new Error("Failed to fetch profile");
+        const { profile } = await res.json();
+        setProfileData(profile);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    fetchProfile()
-  }, [])
+    fetchProfile();
+  }, []);
 
   const handleSave = async () => {
     try {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
       const res = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profileData),
-      })
-      if (!res.ok) throw new Error("Failed to update profile")
-      setIsEditing(false)
-    } catch (err: any) {
-      setError(err.message)
+      });
+      if (!res.ok) throw new Error("Failed to update profile");
+      setIsEditing(false);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleCancel = () => {
-    setIsEditing(false)
-  }
+    setIsEditing(false);
+  };
 
-  if (loading) return <div>Loading...</div>
-  if (error) return <div className="text-red-500">{error}</div>
-  if (!profileData) return <div>No profile data found.</div>
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
+  if (!profileData) return <div>No profile data found.</div>;
 
   return (
     <Card>
@@ -64,7 +70,11 @@ export function UserProfile() {
         <div className="flex items-center justify-between">
           <CardTitle>Profile Information</CardTitle>
           {!isEditing ? (
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditing(true)}
+            >
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
@@ -87,12 +97,17 @@ export function UserProfile() {
           <Avatar className="h-20 w-20">
             <AvatarFallback className="text-lg">
               {profileData.name
-                ? profileData.name.split(" ").map((n: string) => n[0]).join("")
+                ? profileData.name
+                    .split(" ")
+                    .map((n: string) => n[0])
+                    .join("")
                 : "?"}
             </AvatarFallback>
           </Avatar>
           <div>
-            <div className="text-xl font-semibold">{profileData.name || "Unnamed"}</div>
+            <div className="text-xl font-semibold">
+              {profileData.name || "Unnamed"}
+            </div>
             {isEditing && (
               <Button variant="outline" size="sm">
                 Change Photo
@@ -107,7 +122,9 @@ export function UserProfile() {
             <Input
               id="name"
               value={profileData.name || ""}
-              onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+              onChange={(e) =>
+                setProfileData({ ...profileData, name: e.target.value })
+              }
               disabled={!isEditing}
             />
           </div>
@@ -118,7 +135,9 @@ export function UserProfile() {
               id="email"
               type="email"
               value={profileData.email || ""}
-              onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+              onChange={(e) =>
+                setProfileData({ ...profileData, email: e.target.value })
+              }
               disabled={!isEditing}
             />
           </div>
@@ -128,7 +147,9 @@ export function UserProfile() {
             <Input
               id="phone"
               value={profileData.phone || ""}
-              onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+              onChange={(e) =>
+                setProfileData({ ...profileData, phone: e.target.value })
+              }
               disabled={!isEditing}
             />
           </div>
@@ -138,12 +159,14 @@ export function UserProfile() {
             <Input
               id="address"
               value={profileData.address || ""}
-              onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
+              onChange={(e) =>
+                setProfileData({ ...profileData, address: e.target.value })
+              }
               disabled={!isEditing}
             />
           </div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

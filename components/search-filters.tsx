@@ -1,25 +1,31 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { MapPin, Calendar, DollarSign, Star, Filter } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MapPin, Calendar, DollarSign, Star, Filter } from "lucide-react";
 
 interface SearchFiltersProps {
   filters: {
-    location: string
-    bookingType: "daily" | "monthly"
-    numberOfDays: number
-    numberOfMonths?: number
-    priceRange: number[]
-    experience: string
-    preferences: string[]
-  }
-  onFiltersChange: (filters: any) => void
+    location: string;
+    bookingType: "daily" | "monthly";
+    numberOfDays: number;
+    numberOfMonths?: number;
+    priceRange: number[];
+    experience: string;
+    preferences: string[];
+  };
+  onFiltersChange: (filters: Record<string, unknown>) => void;
 }
 
 const preferences = [
@@ -29,19 +35,22 @@ const preferences = [
   "Female driver",
   "Experienced with luxury cars",
   "Available for long trips",
-]
+];
 
-export function SearchFilters({ filters, onFiltersChange }: SearchFiltersProps) {
-  const updateFilter = (key: string, value: any) => {
-    onFiltersChange({ ...filters, [key]: value })
-  }
+export function SearchFilters({
+  filters,
+  onFiltersChange,
+}: SearchFiltersProps) {
+  const updateFilter = (key: string, value: unknown) => {
+    onFiltersChange({ ...filters, [key]: value });
+  };
 
   const togglePreference = (preference: string) => {
     const newPreferences = filters.preferences.includes(preference)
       ? filters.preferences.filter((p) => p !== preference)
-      : [...filters.preferences, preference]
-    updateFilter("preferences", newPreferences)
-  }
+      : [...filters.preferences, preference];
+    updateFilter("preferences", newPreferences);
+  };
 
   return (
     <Card className="sticky top-24">
@@ -71,7 +80,10 @@ export function SearchFilters({ filters, onFiltersChange }: SearchFiltersProps) 
             <Calendar className="h-4 w-4" />
             <span>Booking Type</span>
           </Label>
-          <Select value={filters.bookingType} onValueChange={(value) => updateFilter("bookingType", value)}>
+          <Select
+            value={filters.bookingType}
+            onValueChange={(value) => updateFilter("bookingType", value)}
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -86,7 +98,9 @@ export function SearchFilters({ filters, onFiltersChange }: SearchFiltersProps) 
         {filters.bookingType === "daily" && (
           <div className="space-y-2">
             <Label>Booking Dates</Label>
-            <p className="text-xs text-muted-foreground">You can select specific dates after choosing a driver</p>
+            <p className="text-xs text-muted-foreground">
+              You can select specific dates after choosing a driver
+            </p>
           </div>
         )}
 
@@ -96,7 +110,9 @@ export function SearchFilters({ filters, onFiltersChange }: SearchFiltersProps) 
             <Label>Number of Months</Label>
             <Select
               value={filters.numberOfMonths?.toString() || "1"}
-              onValueChange={(value) => updateFilter("numberOfMonths", Number.parseInt(value))}
+              onValueChange={(value) =>
+                updateFilter("numberOfMonths", Number.parseInt(value))
+              }
             >
               <SelectTrigger>
                 <SelectValue />
@@ -140,7 +156,10 @@ export function SearchFilters({ filters, onFiltersChange }: SearchFiltersProps) 
             <Star className="h-4 w-4" />
             <span>Experience</span>
           </Label>
-          <Select value={filters.experience} onValueChange={(value) => updateFilter("experience", value)}>
+          <Select
+            value={filters.experience}
+            onValueChange={(value) => updateFilter("experience", value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select experience" />
             </SelectTrigger>
@@ -175,5 +194,5 @@ export function SearchFilters({ filters, onFiltersChange }: SearchFiltersProps) 
         <Button className="w-full">Apply Filters</Button>
       </CardContent>
     </Card>
-  )
+  );
 }

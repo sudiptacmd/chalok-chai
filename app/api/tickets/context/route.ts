@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import dbConnect from "@/lib/mongodb";
-import { Booking, Driver, User } from "@/lib/models";
+import { Booking, Driver } from "@/lib/models";
 
 // Returns distinct counterpart users and bookings to populate ticket creation form
-export async function GET(req: NextRequest) {
+
+export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -14,7 +15,7 @@ export async function GET(req: NextRequest) {
   const userId = session.user.id;
 
   // Fetch bookings where current user is involved and status accepted/completed
-  const statusFilter = { $in: ["accepted", "completed"] } as any;
+  const statusFilter: { $in: string[] } = { $in: ["accepted", "completed"] };
   // Need driver doc if user is driver
   let driverDoc = null;
   if (session.user.type === "driver") {
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
     if (!driverDoc) return NextResponse.json({ users: [], bookings: [] });
   }
 
-  const query: any = {
+  const query: Record<string, unknown> = {
     status: statusFilter,
     $or: [
       { ownerUserId: userId },
@@ -31,14 +32,26 @@ export async function GET(req: NextRequest) {
   };
   const bookings = await Booking.find(query)
     .populate({ path: "ownerUserId", select: "name email type" })
-    .populate({ path: "driverId", populate: { path: "userId", select: "name email type" } })
+    .populate({
+      path: "driverId",
+      populate: { path: "userId", select: "name email type" },
+    })
     .sort({ createdAt: -1 })
     .lean();
 
-  const counterpartsMap = new Map<string, any>();
+  const counterpartsMap = new Map<
+    string,
+    { _id: string; name: string; email: string }
+  >();
   for (const b of bookings) {
-    const ownerUser = b.ownerUserId as any;
-    const driverUser = (b.driverId as any)?.userId;
+    const ownerUser = b.ownerUserId as {
+      _id: string;
+      name: string;
+      email: string;
+    };
+    const driverUser = (
+      b.driverId as { userId: { _id: string; name: string; email: string } }
+    )?.userId;
     if (ownerUser && ownerUser._id.toString() !== userId) {
       counterpartsMap.set(ownerUser._id.toString(), ownerUser);
     }
@@ -49,7 +62,7 @@ export async function GET(req: NextRequest) {
   const counterparts = Array.from(counterpartsMap.values());
   // Simplify booking data for client
   const bookingOptions = bookings.map((raw) => {
-    const b: any = raw;
+    const b = raw as Record<string, unknown>;
     return {
       id: b._id?.toString(),
       type: b.bookingType,
@@ -57,8 +70,12 @@ export async function GET(req: NextRequest) {
       startDate: b.startDate,
       endDate: b.endDate,
       selectedDates: b.selectedDates,
-      ownerUserId: (b.ownerUserId as any)?._id?.toString(),
-      driverUserId: ((b.driverId as any)?.userId as any)?._id?.toString(),
+      ownerUserId: (
+        b.ownerUserId as { _id?: { toString(): string } }
+      )?._id?.toString(),
+      driverUserId: (
+        b.driverId as { userId?: { _id?: { toString(): string } } }
+      )?.userId?._id?.toString(),
     };
   });
 

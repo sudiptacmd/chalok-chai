@@ -5,15 +5,6 @@ import dbConnect from "@/lib/mongodb";
 import { User, Driver, Owner, Booking } from "@/lib/models";
 
 // Simple in-memory cache (per server instance) to limit heavy aggregation frequency
-interface RecentBookingRaw {
-  driverId?: string;
-  amount?: number;
-  endDate?: Date;
-  startDate?: Date;
-  status?: string;
-  createdAt?: Date;
-}
-
 interface AnalyticsPayload {
   totalUsers: number;
   totalDrivers: number;
@@ -86,17 +77,23 @@ export async function GET() {
     // Recent bookings section should show ACCEPTED bookings in descending time order
     const acceptedBookings = await Booking.find({ status: "accepted" })
       .sort({ updatedAt: -1 })
-      .populate({ path: "driverId", populate: { path: "userId", select: "name" } })
+      .populate({
+        path: "driverId",
+        populate: { path: "userId", select: "name" },
+      })
       .lean();
 
-    interface DriverPopulated { userId?: { name?: string } }
-    const recentBookings: AnalyticsPayload["recentBookings"] = acceptedBookings.map((b: any) => ({
-      id: b._id.toString(),
-      driverName: (b.driverId as DriverPopulated)?.userId?.name || "Driver",
-      amount: b.totalCost || 0,
-      date: b.updatedAt || b.createdAt,
-      status: b.status,
-    }));
+    interface DriverPopulated {
+      userId?: { name?: string };
+    }
+    const recentBookings: AnalyticsPayload["recentBookings"] =
+      acceptedBookings.map((b: Record<string, unknown>) => ({
+        id: (b._id as { toString(): string }).toString(),
+        driverName: (b.driverId as DriverPopulated)?.userId?.name || "Driver",
+        amount: (b.totalCost as number) || 0,
+        date: (b.updatedAt as Date) || (b.createdAt as Date),
+        status: b.status as string,
+      }));
 
     const ratingAgg = await Driver.aggregate([
       { $match: { approved: true } },

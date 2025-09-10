@@ -77,7 +77,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token) {
         session.user.id = token.sub!;
-        session.user.type = token.type as string;
+        session.user.type = token.type as "driver" | "owner" | "admin";
         session.user.profilePhoto = token.profilePhoto as string;
       }
       return session;

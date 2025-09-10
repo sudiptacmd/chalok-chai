@@ -46,7 +46,14 @@ export async function uploadImageToCloudinary(
       resource_type: "auto" as const,
     };
 
-    let result: any;
+    let result: {
+      public_id: string;
+      secure_url: string;
+      width?: number;
+      height?: number;
+      format?: string;
+      bytes?: number;
+    };
     if (typeof file === "string") {
       // If file is a base64 string
       result = await cloudinary.uploader.upload(file, uploadOptions);
@@ -56,7 +63,8 @@ export async function uploadImageToCloudinary(
         cloudinary.uploader
           .upload_stream(uploadOptions, (error, result) => {
             if (error) reject(error);
-            else resolve(result);
+            else if (result) resolve(result);
+            else reject(new Error("Upload failed"));
           })
           .end(file);
       });

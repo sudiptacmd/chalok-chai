@@ -6,10 +6,17 @@ import { DriverDashboardTabs } from "@/components/driver-dashboard-tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ProfileData {
-  user: any;
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    profilePhoto?: string;
+    type: string;
+  };
   profile: {
     _id: string;
-    [key: string]: any;
+    userId: string;
+    [key: string]: unknown;
   };
 }
 

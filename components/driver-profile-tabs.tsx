@@ -1,10 +1,14 @@
-"use client"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DriverCalendar } from "@/components/driver-calendar"
-import { DriverReviewsTab } from "@/components/driver-reviews-tab"
+"use client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DriverCalendar } from "@/components/driver-calendar";
+import { DriverReviewsTab } from "@/components/driver-reviews-tab";
 
 interface DriverProfileTabsProps {
-  driver: any
+  driver: {
+    id: string;
+    availability: Record<string, "available" | "booked" | "unavailable">;
+    [key: string]: unknown;
+  };
 }
 
 export function DriverProfileTabs({ driver }: DriverProfileTabsProps) {
@@ -23,5 +27,5 @@ export function DriverProfileTabs({ driver }: DriverProfileTabsProps) {
         <DriverReviewsTab driverId={driver.id} />
       </TabsContent>
     </Tabs>
-  )
+  );
 }

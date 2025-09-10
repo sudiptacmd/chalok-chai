@@ -58,7 +58,8 @@ export async function POST(request: NextRequest) {
     if (driver) {
       // Check if this booking was already reviewed
       const existingReviewIndex = driver.ratings.findIndex(
-        (r: any) => r.bookingId && r.bookingId.toString() === bookingId
+        (r: { bookingId?: { toString(): string } }) =>
+          r.bookingId && r.bookingId.toString() === bookingId
       );
 
       const reviewData = {

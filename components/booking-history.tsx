@@ -9,7 +9,6 @@ import { MapPin, Star, MessageSquare, MessageCircle } from "lucide-react";
 import { ReviewModal } from "@/components/review-modal";
 import { useRouter } from "next/navigation";
 
-
 type Booking = {
   _id: string;
   bookingType: "daily" | "monthly";
@@ -19,9 +18,9 @@ type Booking = {
   pickupLocation: string;
   totalCost: number;
   status: string;
-  driverId?: { 
+  driverId?: {
     _id?: string;
-    userId?: { name?: string } 
+    userId?: { name?: string };
   };
   review?: {
     rating?: number;
@@ -54,7 +53,6 @@ export function BookingHistory() {
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
-
   useEffect(() => {
     const controller = new AbortController();
     const load = async () => {
@@ -80,7 +78,11 @@ export function BookingHistory() {
     setReviewModalOpen(true);
   };
 
-  const handleReviewSubmit = async (bookingId: string, rating: number, comment: string) => {
+  const handleReviewSubmit = async (
+    bookingId: string,
+    rating: number,
+    comment: string
+  ) => {
     try {
       const response = await fetch("/api/bookings/review", {
         method: "POST",
@@ -99,18 +101,20 @@ export function BookingHistory() {
       }
 
       // Update the local bookings state
-      setBookings(prev => prev.map(booking => 
-        booking._id === bookingId 
-          ? { 
-              ...booking, 
-              review: { 
-                rating, 
-                comment, 
-                reviewedAt: new Date().toISOString() 
-              } 
-            }
-          : booking
-      ));
+      setBookings((prev) =>
+        prev.map((booking) =>
+          booking._id === bookingId
+            ? {
+                ...booking,
+                review: {
+                  rating,
+                  comment,
+                  reviewedAt: new Date().toISOString(),
+                },
+              }
+            : booking
+        )
+      );
 
       alert("Review submitted successfully!");
     } catch (error) {
@@ -207,7 +211,6 @@ export function BookingHistory() {
                   </div>
                 </div>
 
-
                 <div className="flex justify-end">
                   <Button
                     variant="outline"
@@ -217,12 +220,21 @@ export function BookingHistory() {
                     onClick={async () => {
                       try {
                         // Ensure/create conversation with driver user
-                        const driverRes = await fetch(`/api/drivers/${(booking as any).driverId?._id || ""}`);
+                        const driverRes = await fetch(
+                          `/api/drivers/${
+                            (booking as { driverId?: { _id?: string } })
+                              .driverId?._id || ""
+                          }`
+                        );
                         if (!driverRes.ok) return;
                         const d = await driverRes.json();
                         const otherUserId = d.userId;
                         if (!otherUserId) return;
-                        const cr = await fetch('/api/messages/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ otherUserId })});
+                        const cr = await fetch("/api/messages/conversations", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ otherUserId }),
+                        });
                         if (!cr.ok) return;
                         const { conversationId } = await cr.json();
                         router.push(`/messages/${conversationId}`);
@@ -241,7 +253,9 @@ export function BookingHistory() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium">Your Review:</span>
+                            <span className="text-sm font-medium">
+                              Your Review:
+                            </span>
                             {renderStars(booking.review.rating)}
                             <span className="text-sm text-muted-foreground">
                               ({booking.review.rating}/5)
@@ -260,12 +274,15 @@ export function BookingHistory() {
                           <div className="flex items-start space-x-2">
                             <MessageSquare className="h-4 w-4 text-muted-foreground mt-0.5" />
                             <p className="text-sm text-muted-foreground italic">
-                              "{booking.review.comment}"
+                              &quot;{booking.review.comment}&quot;
                             </p>
                           </div>
                         )}
                         <p className="text-xs text-muted-foreground">
-                          Reviewed on {new Date(booking.review.reviewedAt!).toLocaleDateString()}
+                          Reviewed on{" "}
+                          {new Date(
+                            booking.review.reviewedAt!
+                          ).toLocaleDateString()}
                         </p>
                       </div>
                     ) : (
@@ -286,7 +303,6 @@ export function BookingHistory() {
                     )}
                   </div>
                 )}
-
               </div>
             ))}
           </div>

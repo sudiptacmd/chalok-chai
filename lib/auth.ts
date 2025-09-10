@@ -14,9 +14,9 @@ if (!JWT_SECRET) {
  */
 export function generateToken(
   payload: object | string,
-  expiresIn: string = "24h"
+  expiresIn: string | number = "24h"
 ): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn } as jwt.SignOptions);
 }
 
 /**

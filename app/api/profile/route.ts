@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth-options";
 import { User, Driver, Owner } from "@/lib/models";
 
 // GET: Get current user's profile (driver or owner)
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await dbConnect();
     const session = await getServerSession(authOptions);
@@ -26,8 +26,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
     return NextResponse.json({ user, profile });
-  } catch (error) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -68,6 +71,9 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ user: updatedUser, profile });
   } catch (error) {
     console.error("Profile API error: ", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

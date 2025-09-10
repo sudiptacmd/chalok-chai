@@ -62,17 +62,25 @@ export async function GET(
             },
           },
         ];
-        changeStream = coll.watch(pipeline as any, {
+        changeStream = coll.watch(pipeline, {
           fullDocument: "updateLookup",
         });
-        changeStream.on("change", (change: any) => {
-          const msgId = change.fullDocument?._id?.toString();
-          if (msgId) {
-            send({
-              type: "message",
-              conversationId: conv._id.toString(),
-              messageId: msgId,
-            });
+        changeStream.on("change", (change) => {
+          if (
+            change.operationType === "insert" ||
+            change.operationType === "update"
+          ) {
+            const msgId =
+              "fullDocument" in change && change.fullDocument
+                ? change.fullDocument._id?.toString()
+                : null;
+            if (msgId) {
+              send({
+                type: "message",
+                conversationId: conv._id.toString(),
+                messageId: msgId,
+              });
+            }
           }
         });
       } catch (err) {

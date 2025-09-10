@@ -73,7 +73,7 @@ export async function GET(
     }, {});
     const response = {
       id: ed._id.toString(),
-      userId: (driver as any).userId?._id?.toString?.() || undefined,
+      userId: driver.userId?._id?.toString() || undefined,
       name: ed.userId?.name || "Unnamed",
       photo: ed.userId?.profilePhoto || null,
       rating: ed.averageRating || 0,

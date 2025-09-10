@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Star, TrendingUp } from "lucide-react"
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Star, TrendingUp } from "lucide-react";
 
 interface Review {
   _id: string;
@@ -41,30 +41,38 @@ export function DriverReviewsTab({ driverId }: DriverReviewsTabProps) {
         if (response.ok) {
           const data = await response.json();
           setReviews(data.reviews || []);
-          
+
           // Calculate stats from reviews
           const totalReviews = data.reviews?.length || 0;
           if (totalReviews > 0) {
-            const ratingsCount = data.reviews.reduce((acc: any, review: Review) => {
-              acc[`${review.score}Stars`] = (acc[`${review.score}Stars`] || 0) + 1;
-              return acc;
-            }, {});
+            const ratingsCount = data.reviews.reduce(
+              (acc: Record<string, number>, review: Review) => {
+                acc[`${review.score}Stars`] =
+                  (acc[`${review.score}Stars`] || 0) + 1;
+                return acc;
+              },
+              {}
+            );
 
-            const averageRating = data.reviews.reduce((sum: number, review: Review) => sum + review.score, 0) / totalReviews;
+            const averageRating =
+              data.reviews.reduce(
+                (sum: number, review: Review) => sum + review.score,
+                0
+              ) / totalReviews;
 
             setStats({
               averageRating: Math.round(averageRating * 10) / 10,
               totalReviews,
-              fiveStars: ratingsCount['5Stars'] || 0,
-              fourStars: ratingsCount['4Stars'] || 0,
-              threeStars: ratingsCount['3Stars'] || 0,
-              twoStars: ratingsCount['2Stars'] || 0,
-              oneStars: ratingsCount['1Stars'] || 0,
+              fiveStars: ratingsCount["5Stars"] || 0,
+              fourStars: ratingsCount["4Stars"] || 0,
+              threeStars: ratingsCount["3Stars"] || 0,
+              twoStars: ratingsCount["2Stars"] || 0,
+              oneStars: ratingsCount["1Stars"] || 0,
             });
           }
         }
       } catch (error) {
-        console.error('Error fetching reviews:', error);
+        console.error("Error fetching reviews:", error);
       } finally {
         setLoading(false);
       }
@@ -77,13 +85,18 @@ export function DriverReviewsTab({ driverId }: DriverReviewsTabProps) {
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
-      <Star key={i} className={`h-4 w-4 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
-    ))
-  }
+      <Star
+        key={i}
+        className={`h-4 w-4 ${
+          i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+        }`}
+      />
+    ));
+  };
 
   const getPercentage = (count: number) => {
-    return Math.round((count / stats.totalReviews) * 100)
-  }
+    return Math.round((count / stats.totalReviews) * 100);
+  };
 
   return (
     <div className="space-y-6">
@@ -106,11 +119,15 @@ export function DriverReviewsTab({ driverId }: DriverReviewsTabProps) {
                 {stats.totalReviews > 0 ? (
                   <>
                     <div className="text-center mb-6">
-                      <div className="text-4xl font-bold mb-2">{stats.averageRating}</div>
+                      <div className="text-4xl font-bold mb-2">
+                        {stats.averageRating}
+                      </div>
                       <div className="flex items-center justify-center space-x-1 mb-2">
                         {renderStars(Math.round(stats.averageRating))}
                       </div>
-                      <p className="text-muted-foreground">{stats.totalReviews} total reviews</p>
+                      <p className="text-muted-foreground">
+                        {stats.totalReviews} total reviews
+                      </p>
                     </div>
 
                     <div className="space-y-3">
@@ -121,12 +138,20 @@ export function DriverReviewsTab({ driverId }: DriverReviewsTabProps) {
                         { stars: 2, count: stats.twoStars },
                         { stars: 1, count: stats.oneStars },
                       ].map(({ stars, count }) => (
-                        <div key={stars} className="flex items-center space-x-3">
+                        <div
+                          key={stars}
+                          className="flex items-center space-x-3"
+                        >
                           <span className="text-sm w-6">{stars}★</span>
                           <div className="flex-1 bg-muted rounded-full h-2">
-                            <div className="bg-yellow-400 h-2 rounded-full" style={{ width: `${getPercentage(count)}%` }} />
+                            <div
+                              className="bg-yellow-400 h-2 rounded-full"
+                              style={{ width: `${getPercentage(count)}%` }}
+                            />
                           </div>
-                          <span className="text-sm text-muted-foreground w-12">{count}</span>
+                          <span className="text-sm text-muted-foreground w-12">
+                            {count}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -151,7 +176,9 @@ export function DriverReviewsTab({ driverId }: DriverReviewsTabProps) {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span>Average Rating</span>
-                    <span className="font-semibold">{stats.averageRating}/5</span>
+                    <span className="font-semibold">
+                      {stats.averageRating}/5
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Total Reviews</span>
@@ -163,7 +190,9 @@ export function DriverReviewsTab({ driverId }: DriverReviewsTabProps) {
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Recent Reviews</span>
-                    <span className="font-semibold">{reviews.slice(0, 5).length}</span>
+                    <span className="font-semibold">
+                      {reviews.slice(0, 5).length}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -179,7 +208,10 @@ export function DriverReviewsTab({ driverId }: DriverReviewsTabProps) {
               {reviews.length > 0 ? (
                 <div className="space-y-6">
                   {reviews.slice(0, 10).map((review) => (
-                    <div key={review._id} className="border-b pb-6 last:border-b-0 last:pb-0">
+                    <div
+                      key={review._id}
+                      className="border-b pb-6 last:border-b-0 last:pb-0"
+                    >
                       <div className="flex items-start space-x-4">
                         <Avatar>
                           <AvatarFallback>
@@ -192,22 +224,32 @@ export function DriverReviewsTab({ driverId }: DriverReviewsTabProps) {
 
                         <div className="flex-1 space-y-2">
                           <div className="flex items-center justify-between">
-                            <h4 className="font-medium">{review.author.name}</h4>
+                            <h4 className="font-medium">
+                              {review.author.name}
+                            </h4>
                             <span className="text-sm text-muted-foreground">
                               {new Date(review.createdAt).toLocaleDateString()}
                             </span>
                           </div>
 
                           <div className="flex items-center space-x-2">
-                            <div className="flex items-center space-x-1">{renderStars(review.score)}</div>
-                            <span className="text-sm text-muted-foreground">({review.score}/5)</span>
+                            <div className="flex items-center space-x-1">
+                              {renderStars(review.score)}
+                            </div>
+                            <span className="text-sm text-muted-foreground">
+                              ({review.score}/5)
+                            </span>
                             {review.bookingId && (
-                              <span className="text-sm text-muted-foreground">• From booking</span>
+                              <span className="text-sm text-muted-foreground">
+                                • From booking
+                              </span>
                             )}
                           </div>
 
                           {review.description && (
-                            <p className="text-muted-foreground">{review.description}</p>
+                            <p className="text-muted-foreground">
+                              {review.description}
+                            </p>
                           )}
                         </div>
                       </div>
@@ -216,7 +258,10 @@ export function DriverReviewsTab({ driverId }: DriverReviewsTabProps) {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">No reviews yet. Complete some bookings to start receiving reviews!</p>
+                  <p className="text-muted-foreground">
+                    No reviews yet. Complete some bookings to start receiving
+                    reviews!
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -224,5 +269,5 @@ export function DriverReviewsTab({ driverId }: DriverReviewsTabProps) {
         </>
       )}
     </div>
-  )
+  );
 }

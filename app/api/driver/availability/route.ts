@@ -34,20 +34,25 @@ export async function PATCH(req: NextRequest) {
     driver.availability = [];
   }
   // Remove all unavailable dates and replace with new ones
-  driver.availability = driver.availability.filter((d: { date: string; status: string }) => d.status === "booked");
-  
+  driver.availability = driver.availability.filter(
+    (d: { date: string; status: string }) => d.status === "booked"
+  );
+
   // Add new unavailable dates
   if (dates.length > 0 && status === "unavailable") {
-    dates.forEach(date => {
+    dates.forEach((date) => {
       driver.availability.push({ date, status: "unavailable" });
     });
   }
   await driver.save();
-  return NextResponse.json({ success: true, availability: driver.availability });
+  return NextResponse.json({
+    success: true,
+    availability: driver.availability,
+  });
 }
 
 // GET: Get availability for a driver
-export async function GET(req: NextRequest) {
+export async function GET() {
   await dbConnect();
   const session = await getServerSession(authOptions);
   if (!session || session.user.type !== "driver") {

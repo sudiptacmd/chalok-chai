@@ -44,7 +44,7 @@ export function ForgotPasswordPage() {
       } else {
         setError(data.error || "An error occurred");
       }
-    } catch (error) {
+    } catch {
       setError("Network error. Please try again.");
     } finally {
       setIsLoading(false);
@@ -69,7 +69,8 @@ export function ForgotPasswordPage() {
               </div>
               <CardTitle className="text-2xl">Check Your Email</CardTitle>
               <CardDescription>
-                We've sent password reset instructions to your email address.
+                We&apos;ve sent password reset instructions to your email
+                address.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -79,7 +80,7 @@ export function ForgotPasswordPage() {
               </div>
 
               <p className="text-sm text-muted-foreground text-center">
-                Didn't receive an email? Check your spam folder or{" "}
+                Didn&apos;t receive an email? Check your spam folder or{" "}
                 <button
                   onClick={() => {
                     setIsSubmitted(false);
@@ -127,7 +128,7 @@ export function ForgotPasswordPage() {
               <div>
                 <CardTitle className="text-2xl">Forgot Password?</CardTitle>
                 <CardDescription>
-                  Enter your email and we'll send you a reset link
+                  Enter your email and we&apos;ll send you a reset link
                 </CardDescription>
               </div>
             </div>

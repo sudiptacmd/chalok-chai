@@ -19,7 +19,11 @@ export async function GET(request: NextRequest) {
 
     await dbConnect();
 
-    let query: any = { type: { $ne: "admin" } }; // Exclude admin users
+    const query: {
+      type?: { $ne: string } | string;
+      role?: string;
+      name?: { $regex: RegExp };
+    } = { type: { $ne: "admin" } }; // Exclude admin users
 
     // Filter by user type if specified
     if (type && type !== "all") {
@@ -28,14 +32,16 @@ export async function GET(request: NextRequest) {
 
     // Get users
     const users = await User.find(query)
-      .select("name email phone type emailVerified suspended createdAt profilePhoto")
+      .select(
+        "name email phone type emailVerified suspended createdAt profilePhoto"
+      )
       .sort({ createdAt: -1 });
 
     // Get additional data for drivers and owners
     const enrichedUsers = await Promise.all(
       users.map(async (user) => {
         const userData = user.toObject();
-        
+
         if (user.type === "driver") {
           const driver = await Driver.findOne({ userId: user._id });
           if (driver) {
@@ -50,7 +56,11 @@ export async function GET(request: NextRequest) {
               averageRating: driver.averageRating,
               totalRides: driver.totalRides,
               suspended: user.suspended || false,
-              status: user.suspended ? "inactive" : (driver.approved ? "active" : "pending"),
+              status: user.suspended
+                ? "inactive"
+                : driver.approved
+                ? "active"
+                : "pending",
             };
           }
         } else if (user.type === "owner") {
@@ -60,7 +70,11 @@ export async function GET(request: NextRequest) {
               ...userData,
               totalBookings: owner.bookingHistory?.length || 0,
               suspended: user.suspended || false,
-              status: user.suspended ? "inactive" : (user.emailVerified ? "active" : "inactive"),
+              status: user.suspended
+                ? "inactive"
+                : user.emailVerified
+                ? "active"
+                : "inactive",
             };
           }
         }
@@ -68,13 +82,17 @@ export async function GET(request: NextRequest) {
         return {
           ...userData,
           suspended: user.suspended || false,
-          status: user.suspended ? "inactive" : (user.emailVerified ? "active" : "inactive"),
+          status: user.suspended
+            ? "inactive"
+            : user.emailVerified
+            ? "active"
+            : "inactive",
         };
       })
     );
 
     // Filter out null values (unapproved drivers when status=approved)
-    const filteredUsers = enrichedUsers.filter(user => user !== null);
+    const filteredUsers = enrichedUsers.filter((user) => user !== null);
 
     return NextResponse.json(filteredUsers);
   } catch (error) {

@@ -28,7 +28,7 @@ interface DriverData {
   completedTrips: number;
   languages: string[];
   vehicleTypes: string[];
-  availability: Record<string, string>;
+  availability: Record<string, "available" | "booked" | "unavailable">;
   reviews: {
     id: string;
     userName: string;
@@ -102,7 +102,7 @@ export function DriverProfilePage({ driverId }: DriverProfilePageProps) {
                   onBookNow={() => setIsBookingModalOpen(true)}
                   onReport={() => setIsReportModalOpen(true)}
                 />
-                <DriverProfileTabs driver={driver} />
+                <DriverProfileTabs driver={driver as never} />
               </>
             );
           })()}

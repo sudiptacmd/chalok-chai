@@ -10,10 +10,38 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Save, X, Upload, Shield } from "lucide-react";
 
+interface UserData {
+  _id: string;
+  name: string;
+  email: string;
+  profilePhoto?: string;
+  type: string;
+}
+
+interface DriverData {
+  _id: string;
+  userId: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  dateOfBirth?: string;
+  location?: string;
+  nationalId?: string;
+  drivingLicenseNumber?: string;
+  experience?: string;
+  pricePerDay?: number;
+  pricePerMonth?: number;
+  bio?: string;
+  languages?: string[];
+  preferences?: string[];
+  verified?: boolean;
+  [key: string]: unknown;
+}
+
 export function DriverInfo() {
   const [isEditing, setIsEditing] = useState(false);
-  const [driverData, setDriverData] = useState<any>(null);
-  const [userData, setUserData] = useState<any>(null);
+  const [driverData, setDriverData] = useState<DriverData | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,8 +56,8 @@ export function DriverInfo() {
         const { profile, user } = await res.json();
         setDriverData(profile);
         setUserData(user);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         setLoading(false);
       }
@@ -48,8 +76,8 @@ export function DriverInfo() {
       });
       if (!res.ok) throw new Error("Failed to update profile");
       setIsEditing(false);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Update failed");
     } finally {
       setLoading(false);
     }
@@ -85,10 +113,13 @@ export function DriverInfo() {
       const result = await res.json();
 
       // Update the user data with the new profile photo
-      setUserData((prev) => ({
-        ...prev,
-        profilePhoto: result.url,
-      }));
+      setUserData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          profilePhoto: result.url,
+        };
+      });
 
       // Optionally refresh the entire profile
       const profileRes = await fetch("/api/profile");
@@ -100,8 +131,8 @@ export function DriverInfo() {
 
       // Refresh the page to update session data in header
       window.location.reload();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -151,7 +182,7 @@ export function DriverInfo() {
                 />
                 <AvatarFallback className="text-lg">
                   {userData?.name || driverData?.name
-                    ? (userData?.name || driverData?.name)
+                    ? (userData?.name || driverData?.name || "Unknown")
                         .split(" ")
                         .map((n: string) => n[0])
                         .join("")
@@ -321,7 +352,7 @@ export function DriverInfo() {
                     onChange={(e) =>
                       setDriverData({
                         ...driverData,
-                        pricePerDay: Number(e.target.value) || null,
+                        pricePerDay: Number(e.target.value) || undefined,
                       })
                     }
                     disabled={!isEditing}
@@ -337,7 +368,7 @@ export function DriverInfo() {
                     onChange={(e) =>
                       setDriverData({
                         ...driverData,
-                        pricePerMonth: Number(e.target.value) || null,
+                        pricePerMonth: Number(e.target.value) || undefined,
                       })
                     }
                     disabled={!isEditing}

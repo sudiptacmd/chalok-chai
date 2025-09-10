@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   await dbConnect();
   const { searchParams } = new URL(req.url);
   const scope = searchParams.get("scope") || "mine";
-  const filter: any = {};
+  const filter: Record<string, unknown> = {};
   if (scope === "involved") {
     filter.$or = [
       { createdByUserId: session.user.id },
@@ -28,10 +28,14 @@ export async function GET(req: NextRequest) {
     .populate("againstUserId", "name email type")
     .populate({
       path: "relatedBookingId",
-      select: "bookingType selectedDates startDate endDate status totalCost driverId ownerUserId",
+      select:
+        "bookingType selectedDates startDate endDate status totalCost driverId ownerUserId",
       populate: [
         { path: "ownerUserId", select: "name email" },
-        { path: "driverId", populate: { path: "userId", select: "name email" } },
+        {
+          path: "driverId",
+          populate: { path: "userId", select: "name email" },
+        },
       ],
     })
     .sort({ lastMessageAt: -1 })
@@ -53,7 +57,8 @@ export async function POST(req: NextRequest) {
   await dbConnect();
   const creatorId = session.user.id;
   const creatorUser = await User.findById(creatorId);
-  if (!creatorUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
+  if (!creatorUser)
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   let booking = null;
   if (relatedBookingId) {
@@ -62,7 +67,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Booking not found" }, { status: 400 });
     }
     // ensure booking connects the two users
-    const usersInBooking = [booking.ownerUserId.toString()];
     // booking.driverId references Driver, need its userId indirectly; skip deep validation for now
   } else {
     // find any accepted/completed booking between users
@@ -75,7 +79,10 @@ export async function POST(req: NextRequest) {
     });
   }
   if (!booking) {
-    return NextResponse.json({ error: "No qualifying booking between users" }, { status: 400 });
+    return NextResponse.json(
+      { error: "No qualifying booking between users" },
+      { status: 400 }
+    );
   }
   const ticket = await Ticket.create({
     createdByUserId: creatorId,

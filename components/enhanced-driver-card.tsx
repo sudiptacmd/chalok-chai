@@ -176,7 +176,7 @@ export function EnhancedDriverCard({
       <EnhancedBookingModal
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}
-        driver={driver}
+        driver={driver as never}
         defaultBookingType={bookingType}
       />
     </>
