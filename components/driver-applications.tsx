@@ -1,144 +1,250 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Check, X, Eye, FileText, Clock } from "lucide-react"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Check, X, Eye, FileText, Clock, Loader2 } from "lucide-react";
 
-// Mock driver applications data
-const mockApplications = [
-  {
-    id: "1",
-    name: "Rahman Ali",
-    email: "rahman.ali@example.com",
-    phone: "+880 1234-567890",
-    dateOfBirth: "1988-05-20",
-    nationalId: "1234567890123",
-    drivingLicense: "DL987654321",
-    location: "Dhaka, Mirpur",
-    experience: "3 years",
-    bio: "Experienced driver with clean driving record.",
-    appliedDate: "2024-01-10",
-    status: "pending",
-    documents: {
-      nidImage: "/document-placeholder.png",
-      licenseImage: "/document-placeholder.png",
-      photo: "/professional-driver-portrait.png",
-    },
-  },
-  {
-    id: "2",
-    name: "Fatima Khatun",
-    email: "fatima.khatun@example.com",
-    phone: "+880 1987-654321",
-    dateOfBirth: "1990-08-15",
-    nationalId: "9876543210987",
-    drivingLicense: "DL123456789",
-    location: "Dhaka, Wari",
-    experience: "2 years",
-    bio: "Professional female driver with excellent customer service.",
-    appliedDate: "2024-01-12",
-    status: "pending",
-    documents: {
-      nidImage: "/document-placeholder.png",
-      licenseImage: "/document-placeholder.png",
-      photo: "/professional-female-driver.png",
-    },
-  },
-]
+interface DriverApplication {
+  _id: string;
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+    phone: string;
+    emailVerified: boolean;
+    createdAt: string;
+    profilePhoto?: string;
+  };
+  name?: string;
+  email: string;
+  phone: string;
+  dateOfBirth: string;
+  nationalId: string;
+  drivingLicenseNumber: string;
+  drivingLicensePhoto?: string;
+  location: string;
+  bio?: string;
+  experience?: string;
+  approved: boolean;
+  createdAt: string;
+}
 
 //component
 export function DriverApplications() {
-  const [applications, setApplications] = useState(mockApplications)
-  const [selectedApplication, setSelectedApplication] = useState<any>(null)
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [applications, setApplications] = useState<DriverApplication[]>([]);
+  const [selectedApplication, setSelectedApplication] =
+    useState<DriverApplication | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const handleApprove = (applicationId: string) => {
-    setApplications(applications.map((app) => (app.id === applicationId ? { ...app, status: "approved" } : app)))
-  }
+  // Fetch applications on component mount
+  useEffect(() => {
+    fetchApplications();
+  }, []);
 
-  const handleReject = (applicationId: string) => {
-    setApplications(applications.map((app) => (app.id === applicationId ? { ...app, status: "rejected" } : app)))
-  }
-
-  const viewDetails = (application: any) => {
-    setSelectedApplication(application)
-    setIsDetailModalOpen(true)
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-500/20 text-yellow-700"
-      case "approved":
-        return "bg-green-500/20 text-green-700"
-      case "rejected":
-        return "bg-red-500/20 text-red-700"
-      default:
-        return "bg-gray-500/20 text-gray-700"
+  const fetchApplications = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/admin/drivers");
+      if (response.ok) {
+        const data = await response.json();
+        setApplications(data);
+      } else {
+        console.error("Failed to fetch applications");
+        alert("Failed to fetch driver applications");
+      }
+    } catch (error) {
+      console.error("Error fetching applications:", error);
+      alert("Error fetching driver applications");
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  const pendingApplications = applications.filter((app) => app.status === "pending")
-  const processedApplications = applications.filter((app) => app.status !== "pending")
+  const handleApprove = async (applicationId: string) => {
+    try {
+      setActionLoading(applicationId);
+      const response = await fetch("/api/admin/drivers", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          driverId: applicationId,
+          approved: true,
+        }),
+      });
+
+      if (response.ok) {
+        // Remove the approved application from the list
+        setApplications(
+          applications.filter((app) => app._id !== applicationId)
+        );
+        alert("Driver application approved successfully!");
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to approve application: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Error approving application:", error);
+      alert("Error approving application");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleReject = async (applicationId: string) => {
+    if (
+      !confirm(
+        "Are you sure you want to reject this application? This will permanently delete the user account and driver data."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setActionLoading(applicationId);
+      const response = await fetch("/api/admin/drivers", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          driverId: applicationId,
+          approved: false,
+        }),
+      });
+
+      if (response.ok) {
+        // Remove the rejected application from the list
+        setApplications(
+          applications.filter((app) => app._id !== applicationId)
+        );
+        alert(
+          "Driver application rejected and user account deleted successfully!"
+        );
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to reject application: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Error rejecting application:", error);
+      alert("Error rejecting application");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const viewDetails = (application: DriverApplication) => {
+    setSelectedApplication(application);
+    setIsDetailModalOpen(true);
+  };
+
+  const getDisplayName = (application: DriverApplication) => {
+    return application.name || application.userId?.name || "Unknown";
+  };
+
+  const getDisplayEmail = (application: DriverApplication) => {
+    return application.email || application.userId?.email || "";
+  };
+
+  const getDisplayPhone = (application: DriverApplication) => {
+    return application.phone || application.userId?.phone || "";
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="text-center py-12">
+          <Loader2 className="h-8 w-8 mx-auto mb-4 animate-spin" />
+          <p className="text-muted-foreground">
+            Loading driver applications...
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Pending Applications */}
-      {pendingApplications.length > 0 && (
+      {applications.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Clock className="h-5 w-5" />
-              <span>Pending Applications ({pendingApplications.length})</span>
+              <span>Pending Applications ({applications.length})</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {pendingApplications.map((application) => (
-                <div key={application.id} className="border rounded-lg p-4 space-y-4">
+              {applications.map((application) => (
+                <div
+                  key={application._id}
+                  className="border rounded-lg p-4 space-y-4"
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <Avatar>
                         <AvatarFallback>
-                          {application.name
+                          {getDisplayName(application)
                             .split(" ")
-                            .map((n) => n[0])
+                            .map((n: string) => n[0])
                             .join("")}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-semibold">{application.name}</h3>
-                        <p className="text-sm text-muted-foreground">{application.email}</p>
+                        <h3 className="font-semibold">
+                          {getDisplayName(application)}
+                        </h3>
                         <p className="text-sm text-muted-foreground">
-                          Applied: {new Date(application.appliedDate).toLocaleDateString()}
+                          {getDisplayEmail(application)}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Applied:{" "}
+                          {new Date(application.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
-                    <Badge className={getStatusColor(application.status)}>
-                      {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                    <Badge className="bg-yellow-500/20 text-yellow-700">
+                      Pending
                     </Badge>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">Phone:</span>
-                      <div className="font-medium">{application.phone}</div>
+                      <div className="font-medium">
+                        {getDisplayPhone(application)}
+                      </div>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Location:</span>
-                      <div className="font-medium">{application.location}</div>
+                      <div className="font-medium">
+                        {application.location || "Not provided"}
+                      </div>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Experience:</span>
-                      <div className="font-medium">{application.experience}</div>
+                      <div className="font-medium">
+                        {application.experience || "Not provided"}
+                      </div>
                     </div>
                     <div>
                       <span className="text-muted-foreground">License:</span>
-                      <div className="font-medium">{application.drivingLicense}</div>
+                      <div className="font-medium">
+                        {application.drivingLicenseNumber}
+                      </div>
                     </div>
                   </div>
 
@@ -155,52 +261,29 @@ export function DriverApplications() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleReject(application.id)}
+                      onClick={() => handleReject(application._id)}
+                      disabled={actionLoading === application._id}
                       className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
                     >
-                      <X className="h-4 w-4 mr-2" />
+                      {actionLoading === application._id ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <X className="h-4 w-4 mr-2" />
+                      )}
                       Reject
                     </Button>
-                    <Button size="sm" onClick={() => handleApprove(application.id)}>
-                      <Check className="h-4 w-4 mr-2" />
+                    <Button
+                      size="sm"
+                      onClick={() => handleApprove(application._id)}
+                      disabled={actionLoading === application._id}
+                    >
+                      {actionLoading === application._id ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Check className="h-4 w-4 mr-2" />
+                      )}
                       Approve
                     </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Processed Applications */}
-      {processedApplications.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Decisions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {processedApplications.map((application) => (
-                <div key={application.id} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Avatar>
-                        <AvatarFallback>
-                          {application.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-semibold">{application.name}</h3>
-                        <p className="text-sm text-muted-foreground">{application.email}</p>
-                      </div>
-                    </div>
-                    <Badge className={getStatusColor(application.status)}>
-                      {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
-                    </Badge>
                   </div>
                 </div>
               ))}
@@ -213,7 +296,9 @@ export function DriverApplications() {
         <Card>
           <CardContent className="text-center py-12">
             <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">No driver applications</p>
+            <p className="text-muted-foreground">
+              No pending driver applications
+            </p>
           </CardContent>
         </Card>
       )}
@@ -230,26 +315,38 @@ export function DriverApplications() {
               <div className="flex items-center space-x-4">
                 <Avatar className="h-16 w-16">
                   <AvatarFallback className="text-lg">
-                    {selectedApplication.name
+                    {getDisplayName(selectedApplication)
                       .split(" ")
                       .map((n: string) => n[0])
                       .join("")}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="text-xl font-semibold">{selectedApplication.name}</h3>
-                  <p className="text-muted-foreground">{selectedApplication.email}</p>
+                  <h3 className="text-xl font-semibold">
+                    {getDisplayName(selectedApplication)}
+                  </h3>
+                  <p className="text-muted-foreground">
+                    {getDisplayEmail(selectedApplication)}
+                  </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Phone Number</label>
-                  <p className="text-sm">{selectedApplication.phone}</p>
+                  <p className="text-sm">
+                    {getDisplayPhone(selectedApplication)}
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Date of Birth</label>
-                  <p className="text-sm">{new Date(selectedApplication.dateOfBirth).toLocaleDateString()}</p>
+                  <p className="text-sm">
+                    {selectedApplication.dateOfBirth
+                      ? new Date(
+                          selectedApplication.dateOfBirth
+                        ).toLocaleDateString()
+                      : "Not provided"}
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">National ID</label>
@@ -257,7 +354,9 @@ export function DriverApplications() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Driving License</label>
-                  <p className="text-sm">{selectedApplication.drivingLicense}</p>
+                  <p className="text-sm">
+                    {selectedApplication.drivingLicenseNumber}
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Location</label>
@@ -265,13 +364,17 @@ export function DriverApplications() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Experience</label>
-                  <p className="text-sm">{selectedApplication.experience}</p>
+                  <p className="text-sm">
+                    {selectedApplication.experience || "Not provided"}
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Bio</label>
-                <p className="text-sm">{selectedApplication.bio}</p>
+                <p className="text-sm">
+                  {selectedApplication.bio || "Not provided"}
+                </p>
               </div>
 
               <div className="space-y-4">
@@ -281,7 +384,9 @@ export function DriverApplications() {
                     <label className="text-sm font-medium">Profile Photo</label>
                     <div className="border rounded-lg p-4 text-center">
                       <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">View Photo</p>
+                      <p className="text-xs text-muted-foreground">
+                        View Photo
+                      </p>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -292,44 +397,56 @@ export function DriverApplications() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Driving License</label>
+                    <label className="text-sm font-medium">
+                      Driving License
+                    </label>
                     <div className="border rounded-lg p-4 text-center">
                       <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">View License</p>
+                      <p className="text-xs text-muted-foreground">
+                        View License
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {selectedApplication.status === "pending" && (
-                <div className="flex space-x-3 pt-4 border-t">
-                  <Button
-                    variant="outline"
-                    className="flex-1 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground bg-transparent"
-                    onClick={() => {
-                      handleReject(selectedApplication.id)
-                      setIsDetailModalOpen(false)
-                    }}
-                  >
+              <div className="flex space-x-3 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  className="flex-1 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground bg-transparent"
+                  onClick={() => {
+                    handleReject(selectedApplication._id);
+                    setIsDetailModalOpen(false);
+                  }}
+                  disabled={actionLoading === selectedApplication._id}
+                >
+                  {actionLoading === selectedApplication._id ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
                     <X className="h-4 w-4 mr-2" />
-                    Reject Application
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    onClick={() => {
-                      handleApprove(selectedApplication.id)
-                      setIsDetailModalOpen(false)
-                    }}
-                  >
+                  )}
+                  Reject Application
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => {
+                    handleApprove(selectedApplication._id);
+                    setIsDetailModalOpen(false);
+                  }}
+                  disabled={actionLoading === selectedApplication._id}
+                >
+                  {actionLoading === selectedApplication._id ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
                     <Check className="h-4 w-4 mr-2" />
-                    Approve Application
-                  </Button>
-                </div>
-              )}
+                  )}
+                  Approve Application
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

@@ -1,5 +1,6 @@
 import { DriverProfilePage } from "@/components/driver-profile-page"
 
-export default function DriverProfile({ params }: { params: { id: string } }) {
-  return <DriverProfilePage driverId={params.id} />
+export default async function DriverProfile({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <DriverProfilePage driverId={id} />
 }

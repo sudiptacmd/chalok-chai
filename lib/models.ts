@@ -148,7 +148,12 @@ const DriverSchema = new Schema({
   phone: { type: String, default: null, required: true },
   dateOfBirth: { type: Date, default: null, required: true },
   nationalId: { type: String, default: null, required: true, unique: true },
-  drivingLicenseNumber: { type: String, default: null, required: true, unique: true },
+  drivingLicenseNumber: {
+    type: String,
+    default: null,
+    required: true,
+    unique: true,
+  },
   drivingLicensePhoto: { type: String, default: null },
   location: { type: String, default: null, required: true },
   bio: { type: String, default: null },
@@ -167,7 +172,7 @@ const DriverSchema = new Schema({
     {
       date: { type: String, required: true }, // YYYY-MM-DD
       status: { type: String, enum: ["unavailable", "booked"], required: true },
-    }
+    },
   ],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
@@ -217,18 +222,12 @@ DriverSchema.methods.calculateAverageRating = function () {
   }
 
   const sum = this.ratings.reduce(
-  (acc: number, rating: { score: number }) => acc + rating.score,
+    (acc: number, rating: { score: number }) => acc + rating.score,
     0
   );
   this.averageRating = Math.round((sum / this.ratings.length) * 10) / 10;
   return this.averageRating;
 };
-
-
-// Export models
-export const User = models.User || model("User", UserSchema);
-export const Owner = models.Owner || model("Owner", OwnerSchema);
-export const Driver = models.Driver || model("Driver", DriverSchema);
 
 // Conversation Schema
 const ConversationSchema = new Schema({
@@ -257,8 +256,9 @@ ConversationSchema.pre("validate", function (next) {
   if (!Array.isArray(this.participants) || this.participants.length !== 2) {
     return next(new Error("Conversation must have exactly two participants"));
   }
-  const [a, b] = this.participants.map((p: { toString(): string } | string | null | undefined) =>
-    p ? p.toString() : ""
+  const [a, b] = this.participants.map(
+    (p: { toString(): string } | string | null | undefined) =>
+      p ? p.toString() : ""
   );
   if (a === b) {
     return next(new Error("Conversation participants must be different users"));
@@ -339,10 +339,22 @@ const TicketSchema = new Schema({
   createdByUserId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   // The other participant the complaint is about (driver or owner)
   againstUserId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  relatedBookingId: { type: Schema.Types.ObjectId, ref: "Booking", default: null },
+  relatedBookingId: {
+    type: Schema.Types.ObjectId,
+    ref: "Booking",
+    default: null,
+  },
   roleContext: { type: String, enum: ["owner", "driver"], required: true },
-  priority: { type: String, enum: ["low", "medium", "high", "urgent"], default: "medium" },
-  status: { type: String, enum: ["open", "pending", "resolved", "closed"], default: "open" },
+  priority: {
+    type: String,
+    enum: ["low", "medium", "high", "urgent"],
+    default: "medium",
+  },
+  status: {
+    type: String,
+    enum: ["open", "pending", "resolved", "closed"],
+    default: "open",
+  },
   subject: { type: String, required: true, trim: true },
   messages: [TicketMessageSchema],
   lastMessageAt: { type: Date, default: Date.now },
@@ -371,4 +383,3 @@ export const Owner = models.Owner || model("Owner", OwnerSchema);
 export const Driver = models.Driver || model("Driver", DriverSchema);
 export const Booking = models.Booking || model("Booking", BookingSchema);
 export const Ticket = models.Ticket || model("Ticket", TicketSchema);
-

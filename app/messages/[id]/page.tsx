@@ -17,8 +17,12 @@ type Msg = {
   createdAt: string;
 };
 
-export default function ConversationPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function ConversationPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const [id, setId] = useState<string>("");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [loading, setLoading] = useState(true);
   const [input, setInput] = useState("");
@@ -26,9 +30,16 @@ export default function ConversationPage({ params }: { params: { id: string } })
   const router = useRouter();
   const { data: session } = useSession();
 
-  const scrollToBottom = () => bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  // Get the id from params
+  useEffect(() => {
+    params.then(({ id }) => setId(id));
+  }, [params]);
+
+  const scrollToBottom = () =>
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 
   useEffect(() => {
+    if (!id) return;
     let abort = false;
     (async () => {
       setLoading(true);
@@ -45,7 +56,7 @@ export default function ConversationPage({ params }: { params: { id: string } })
     return () => {
       abort = true;
     };
-  }, [id]);
+  }, [id, router]);
 
   useEffect(() => {
     const es = new EventSource(`/api/messages/${id}/stream`);
@@ -90,16 +101,35 @@ export default function ConversationPage({ params }: { params: { id: string } })
         <Card className="w-full flex flex-col">
           <CardContent className="p-0 flex flex-col h-[70vh]">
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/20">
-              {loading && <p className="text-sm text-muted-foreground">Loading messages...</p>}
+              {loading && (
+                <p className="text-sm text-muted-foreground">
+                  Loading messages...
+                </p>
+              )}
               {!loading && messages.length === 0 && (
-                <p className="text-sm text-muted-foreground">No messages yet. Say hello!</p>
+                <p className="text-sm text-muted-foreground">
+                  No messages yet. Say hello!
+                </p>
               )}
               {messages.map((m) => {
                 const mine = m.senderId === session?.user?.id;
                 return (
-                  <div key={m._id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                    <div className={`${mine ? "bg-primary text-primary-foreground" : "bg-white text-black"} max-w-[70%] px-3 py-2 rounded-lg shadow-sm border ${mine ? "" : "border-muted"}`}>
-                      <p className="text-sm whitespace-pre-wrap break-words">{m.body}</p>
+                  <div
+                    key={m._id}
+                    className={`flex ${mine ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`${
+                        mine
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-white text-black"
+                      } max-w-[70%] px-3 py-2 rounded-lg shadow-sm border ${
+                        mine ? "" : "border-muted"
+                      }`}
+                    >
+                      <p className="text-sm whitespace-pre-wrap break-words">
+                        {m.body}
+                      </p>
                       <p className="text-[10px] opacity-80 mt-1 text-right">
                         {new Date(m.createdAt).toLocaleTimeString()}
                       </p>

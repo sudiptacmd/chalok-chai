@@ -12,7 +12,7 @@ import { EnhancedBookingModal } from "@/components/enhanced-booking-modal";
 interface Driver {
   id: string;
   name: string;
-  photo: string;
+  photo: string | null;
   rating: number;
   reviewCount: number;
   experience: string;
@@ -48,13 +48,46 @@ export function EnhancedDriverCard({
             {/* Driver Photo */}
             <div className="flex-shrink-0">
               <div className="relative">
-                <Image
-                  src={driver.photo || "/placeholder.svg"}
-                  alt={driver.name}
-                  width={100}
-                  height={100}
-                  className="rounded-lg object-cover"
-                />
+                {driver.photo ? (
+                  <>
+                    <Image
+                      src={driver.photo}
+                      alt={driver.name}
+                      width={100}
+                      height={100}
+                      className="rounded-lg object-cover"
+                      onError={(e) => {
+                        // Hide the image and show fallback if error
+                        e.currentTarget.style.display = "none";
+                        if (e.currentTarget.nextElementSibling) {
+                          (
+                            e.currentTarget.nextElementSibling as HTMLElement
+                          ).style.display = "flex";
+                        }
+                      }}
+                    />
+                    {/* Fallback avatar for broken images */}
+                    <div
+                      className="w-[100px] h-[100px] rounded-lg bg-muted flex items-center justify-center text-2xl font-semibold text-muted-foreground"
+                      style={{ display: "none" }}
+                    >
+                      {driver.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()}
+                    </div>
+                  </>
+                ) : (
+                  /* Default avatar when no photo */
+                  <div className="w-[100px] h-[100px] rounded-lg bg-muted flex items-center justify-center text-2xl font-semibold text-muted-foreground">
+                    {driver.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()}
+                  </div>
+                )}
                 {driver.verified && (
                   <div className="absolute -top-2 -right-2 bg-green-500 rounded-full p-1">
                     <Shield className="h-4 w-4 text-white" />

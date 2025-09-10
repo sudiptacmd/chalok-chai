@@ -9,7 +9,11 @@ import { DriverAvailability } from "@/components/driver-availability";
 import { Inbox, Star, User, Bell, Calendar, ClipboardList } from "lucide-react";
 import { DriverBookings } from "@/components/driver-bookings";
 
-export function DriverDashboardTabs() {
+interface DriverDashboardTabsProps {
+  driverId?: string;
+}
+
+export function DriverDashboardTabs({ driverId }: DriverDashboardTabsProps) {
   return (
     <Tabs defaultValue="requests" className="w-full">
       <TabsList className="grid w-full grid-cols-6">
@@ -50,7 +54,13 @@ export function DriverDashboardTabs() {
       </TabsContent>
 
       <TabsContent value="reviews" className="mt-6">
-        <DriverReviewsTab />
+        {driverId ? (
+          <DriverReviewsTab driverId={driverId} />
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Loading reviews...</p>
+          </div>
+        )}
       </TabsContent>
 
       <TabsContent value="bookings" className="mt-6">

@@ -4,10 +4,10 @@ import { Driver } from "@/lib/models";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const driverId = params.id;
+    const { id: driverId } = await params;
 
     if (!driverId) {
       return NextResponse.json(
@@ -27,15 +27,15 @@ export async function GET(
       .select("ratings averageRating");
 
     if (!driver) {
-      return NextResponse.json(
-        { error: "Driver not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Driver not found" }, { status: 404 });
     }
 
     // Sort reviews by creation date (newest first)
     const sortedReviews = driver.ratings
-      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
       .map((rating: any) => ({
         _id: rating._id,
         score: rating.score,

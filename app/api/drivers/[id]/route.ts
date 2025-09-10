@@ -5,11 +5,11 @@ import mongoose from "mongoose";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
-    const identifier = params.id;
+    const { id: identifier } = await params;
     let driver = await Driver.findOne({
       drivingLicenseNumber: identifier,
     }).populate("userId", "name profilePhoto emailVerified createdAt");

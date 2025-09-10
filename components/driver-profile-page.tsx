@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Header } from "@/components/header";
 import { DriverProfileHeader } from "@/components/driver-profile-header";
 import { DriverProfileTabs } from "@/components/driver-profile-tabs";
-import { BookingModal } from "@/components/booking-modal";
+import { EnhancedBookingModal } from "@/components/enhanced-booking-modal";
 import { ReportModal } from "@/components/report-modal";
 
 interface DriverProfilePageProps {
@@ -81,7 +81,7 @@ export function DriverProfilePage({ driverId }: DriverProfilePageProps) {
             const headerDriver = {
               id: driver.id,
               name: driver.name,
-              photo: driver.photo || "/placeholder.svg",
+              photo: driver.photo || null,
               rating: driver.rating,
               reviewCount: driver.reviewCount,
               experience: driver.experience,
@@ -109,7 +109,7 @@ export function DriverProfilePage({ driverId }: DriverProfilePageProps) {
       </main>
 
       {driver && (
-        <BookingModal
+        <EnhancedBookingModal
           isOpen={isBookingModalOpen}
           onClose={() => setIsBookingModalOpen(false)}
           driver={{

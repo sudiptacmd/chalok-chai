@@ -6,15 +6,17 @@ import { Ticket } from "@/lib/models";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   await dbConnect();
-  const ticket = await Ticket.findById(params.id);
-  if (!ticket) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const { id } = await params;
+  const ticket = await Ticket.findById(id);
+  if (!ticket)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   const uid = session.user.id;
   const isAdmin = session.user.type === "admin";
   if (isAdmin) {
