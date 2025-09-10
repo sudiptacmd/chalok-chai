@@ -47,7 +47,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 // GET: Get availability for a driver
-export async function GET() {
+export async function GET(req: NextRequest) {
   await dbConnect();
   const session = await getServerSession(authOptions);
   if (!session || session.user.type !== "driver") {

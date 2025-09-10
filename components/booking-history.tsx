@@ -3,9 +3,12 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
-import { MapPin, Star, MessageSquare } from "lucide-react";
+import { MapPin, Star, MessageSquare, MessageCircle } from "lucide-react";
 import { ReviewModal } from "@/components/review-modal";
+import { useRouter } from "next/navigation";
+
 
 type Booking = {
   _id: string;
@@ -45,8 +48,12 @@ const getStatusColor = (status: string) => {
 export function BookingHistory() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const router = useRouter();
+
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+
 
   useEffect(() => {
     const controller = new AbortController();
@@ -200,6 +207,33 @@ export function BookingHistory() {
                   </div>
                 </div>
 
+
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-transparent"
+                    disabled={booking.status !== "accepted"}
+                    onClick={async () => {
+                      try {
+                        // Ensure/create conversation with driver user
+                        const driverRes = await fetch(`/api/drivers/${(booking as any).driverId?._id || ""}`);
+                        if (!driverRes.ok) return;
+                        const d = await driverRes.json();
+                        const otherUserId = d.userId;
+                        if (!otherUserId) return;
+                        const cr = await fetch('/api/messages/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ otherUserId })});
+                        if (!cr.ok) return;
+                        const { conversationId } = await cr.json();
+                        router.push(`/messages/${conversationId}`);
+                      } catch {}
+                    }}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Message
+                  </Button>
+                </div>
+
                 {/* Review Section */}
                 {canReview(booking) && (
                   <div className="border-t pt-3 mt-3">
@@ -252,6 +286,7 @@ export function BookingHistory() {
                     )}
                   </div>
                 )}
+
               </div>
             ))}
           </div>

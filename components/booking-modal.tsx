@@ -29,9 +29,10 @@ export function BookingModal({ isOpen, onClose, driver }: BookingModalProps) {
   })
 
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [submitting, setSubmitting] = useState(false)
 
   // Mock availability data - in real app, this would come from props or API
-  const driverAvailability = {
+  const driverAvailability: Record<string, "available" | "booked" | "unavailable"> = {
     "2024-01-15": "available",
     "2024-01-16": "available",
     "2024-01-17": "booked",
@@ -51,11 +52,40 @@ export function BookingModal({ isOpen, onClose, driver }: BookingModalProps) {
     "2024-01-31": "available",
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle booking submission
-    console.log("Booking submitted:", bookingData)
-    onClose()
+    if (submitting) return
+    try {
+      setSubmitting(true)
+      const totalCost = calculateTotal()
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          driverId: (driver as any).id || (driver as any)._id,
+          bookingType: bookingData.bookingType,
+          selectedDates: bookingData.bookingType === "daily" ? bookingData.selectedDates : [],
+          startDate: bookingData.bookingType === "monthly" ? bookingData.startDate : undefined,
+          numberOfMonths: bookingData.bookingType === "monthly" ? bookingData.numberOfMonths : undefined,
+          pickupLocation: bookingData.pickupLocation,
+          notes: bookingData.notes,
+          totalCost,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.error || "Failed to create booking")
+      }
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("driver:bookingsUpdated"))
+      }
+      onClose()
+    } catch (err) {
+      console.error(err)
+      alert((err as Error).message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const calculateTotal = () => {
@@ -402,8 +432,8 @@ export function BookingModal({ isOpen, onClose, driver }: BookingModalProps) {
             <Button type="button" variant="outline" onClick={onClose} className="flex-1 bg-transparent">
               Cancel
             </Button>
-            <Button type="submit" className="flex-1" disabled={!isFormValid()}>
-              Send Booking Request
+            <Button type="submit" className="flex-1" disabled={!isFormValid() || submitting}>
+              {submitting ? "Sending..." : "Send Booking Request"}
             </Button>
           </div>
         </form>
